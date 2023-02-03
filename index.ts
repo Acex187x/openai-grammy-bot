@@ -95,10 +95,16 @@ bot.on("message", async ctx => {
 		ctx.update.message.reply_to_message?.text ||
 		ctx.update.message.reply_to_message?.caption
 
-	const replyToName =
+	let replyToName =
 		ctx.update.message.reply_to_message?.from?.first_name ||
 		ctx.update.message.reply_to_message?.from?.username ||
 		"Anon"
+
+	const isAnsweredToBot = ctx.message.reply_to_message?.from?.id === ctx.me.id
+
+	if (isAnsweredToBot) {
+		replyToName = "you"
+	}
 
 	const promptStart = ctx.session.promptStart || ""
 
@@ -108,7 +114,8 @@ bot.on("message", async ctx => {
 		text = `${promptStart}. Always answer in the same language in which you are asked and use Markdown formatting when needed. Imagine you are asked "${text}" by ${name}, your answer is:`
 	}
 
-	text = text.replace(/разум/gi, " ")
+	// Remove "разум" from the beginning of the message
+	text = text.replace(/^разум\s*/i, "")
 
 	try {
 		const answerText = ctx.session.debug
