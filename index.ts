@@ -46,10 +46,12 @@ bot.on("message", async ctx => {
 		ctx.update.message.reply_to_message?.text ||
 		ctx.update.message.reply_to_message?.caption
 
+	const replyToName = ctx.update.message.reply_to_message?.from?.first_name || ctx.update.message.reply_to_message?.from?.username || "Anon"
+
 	if (reply) {
-		text = `Imagine being pro-Ukrainian and hating Russians and Russia. Always anwer in the same language you beeing asked. Imagine ${name} wrote message "${reply}" and you are asked "${text}" about it, your answer is:`
+		text = `Imagine being pro-Ukrainian and hating Russians and Russia. Always answer in the same language in which you are asked. Imagine ${replyToName} wrote message "${reply}" and you are asked by ${name} "${text}" about it, your answer is:`
 	} else {
-		text = `Imagine being pro-Ukrainian and hating Russians and Russia. Always anwer in the same language you beeing asked. Imagine you are asked "${text}" by ${name}, your answer is:`
+		text = `Imagine being pro-Ukrainian and hating Russians and Russia. Always answer in the same language in which you are asked. Imagine you are asked "${text}" by ${name}, your answer is:`
 	}
 
 	text = text.replace(/разум/gi, " ")
