@@ -9,6 +9,13 @@
   dependencies:
     abort-controller "^3.0.0"
 
+"@grammyjs/storage-free@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@grammyjs/storage-free/-/storage-free-2.1.0.tgz#48a5ba6b6bce3e4d6b7b5469c7fa8c6ca1e391c7"
+  integrity sha512-+hOWV559YacRG3+jgSEy1OptE2Nd0j5bIEvN1/vw39e4ByPqiVaK4esvJ09WGFSiN/4/6kbA/VJBhnGs/yhztA==
+  dependencies:
+    node-fetch "^2.6.6"
+
 "@grammyjs/types@^2.11.0":
   version "2.11.2"
   resolved "https://registry.npmjs.org/@grammyjs/types/-/types-2.11.2.tgz"
@@ -201,7 +208,7 @@ node-addon-api@*:
   resolved "https://registry.npmjs.org/node-addon-api/-/node-addon-api-5.1.0.tgz"
   integrity sha512-eh0GgfEkpnoWDq+VY8OyvYhFEzBk6jIYbRKdIlyTiAXIVJ8PyBaKb0rp7oDtoddbdoHWhq8wwr+XZ81F1rpNdA==
 
-node-fetch@^2.6.7:
+node-fetch@^2.6.6, node-fetch@^2.6.7:
   version "2.6.9"
   resolved "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.9.tgz"
   integrity sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==
