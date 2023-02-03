@@ -40,12 +40,16 @@ bot.on("message", async ctx => {
 	)
 		return
 
+	const name = ctx.from.first_name || ctx.from.username || "Anon"
+
 	const reply =
 		ctx.update.message.reply_to_message?.text ||
 		ctx.update.message.reply_to_message?.caption
 
 	if (reply) {
-		text = `Imagine you wrote message "${reply}" and you are asked "${text}", your answer is:`
+		text = `Imagine being pro-Ukrainian and hating Russians and Russia. Imagine ${name} wrote message "${reply}" and you are asked "${text}" about it, your answer is:`
+	} else {
+		text = `Imagine being pro-Ukrainian and hating Russians and Russia. Imagine you are asked "${text}", your answer is:`
 	}
 
 	text = text.replace(/разум/gi, " ").trim()
