@@ -1,6 +1,19 @@
 # OpenAI Grammy Bot
 Telegram bot written in TypeScript using the Grammy framework to communicate with OpenAI's GPT-3 API.
 
+## Features
+- Bot is fully adapted for both private and group chats
+- User can reply to a bot's message, and prompt will contain both your message and the bot's message
+- User can reply to any message, mentioning the bot and prompt will contain both user's message and the message user replied to.
+- Bot can be used in any language
+
+## Commands
+- promptStart (ps) - Starts a prompt start message
+- debug (d) - Sends a full prompt to answer message
+- maxTokens (mt) - Sets the maximum number of tokens for the prompt and answer
+- temperature (t) - Sets the temperature for the model
+- ping - Pong!
+
 ## Requirements
 - **Node.js** 
 - **ts-node** package (globally installed)
