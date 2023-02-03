@@ -49,20 +49,24 @@ bot.command("ping", ctx => ctx.reply("Pong"))
 
 // Create command handlers to change every session variable. One handler for each variable. Do not use loops
 bot.command(["promptStart", "ps"], ctx => {
+	if (!ctx.message.text) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
 	ctx.session.promptStart = text
 	ctx.reply(`promptStart: ${text}`)
 })
 bot.command(["debug", "d"], ctx => {
+	if (!ctx.message.text) return
 	ctx.session.debug = !ctx.session.debug
 	ctx.reply(`debug: ${ctx.session.debug}`)
 })
 bot.command(["maxTokens", "tokens", "mt"], ctx => {
+	if (!ctx.message.text) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
 	ctx.session.maxTokens = parseInt(text)
 	ctx.reply(`maxTokens: ${text}`)
 })
 bot.command(["temp", "temperature", "t"], ctx => {
+	if (!ctx.message.text) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
 	ctx.session.temperature = parseFloat(text)
 	ctx.reply(`temperature: ${text}`)
