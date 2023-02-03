@@ -54,9 +54,6 @@ bot.on("message", async ctx => {
 
 	text = text.replace(/разум/gi, " ")
 
-	// Replace " in the end and start of the text
-	text = text.replace(/^"/, "").replace(/"$/, "").trim()
-
 	try {
 		const answer = await ctx.reply("_Работаю над ответом..._", {
 			reply_to_message_id: ctx.message.message_id,
@@ -81,7 +78,7 @@ bot.on("message", async ctx => {
 					await ctx.api.editMessageText(
 						ctx.chat.id,
 						answer.message_id,
-						response.data.choices[0].text,
+						response.data.choices[0].text.replace(/^"/, "").replace(/"$/, ""),
 						{
 							parse_mode: "Markdown",
 						}
