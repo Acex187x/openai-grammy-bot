@@ -9,20 +9,20 @@ Telegram bot written in TypeScript using the Grammy framework to communicate wit
 - A Telegram bot token (you can get one from *@BotFather*)
 ## Getting started
 1. Clone this repository:
-bash
-
+```bash
 git clone https://github.com/Acex187x/openai-grammy-bot.git
-2. Install the dependencies:
 ```
+2. Install the dependencies:
+```bash
 yarn install
 ```
 3. Create a .env file in the root directory with the following variables:
-```
+```bash
 OPENAI_API_KEY=<your_openai_api_key>
 TELEGRAM_BOT_TOKEN=<your_telegram_bot_token>
 ```
 4. Start the bot:
-```
+```bash
 yarn start
 ```
 ## Contributing
