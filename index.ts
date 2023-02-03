@@ -16,7 +16,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration)
 
 const bot = new Bot<HydrateFlavor<Context>, HydrateApiFlavor<Api>>(
-	process.env.BOT_TOKEN
+	process.env.BOT_TOKEN || ""
 )
 
 bot.use(hydrateContext())
