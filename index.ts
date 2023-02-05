@@ -147,6 +147,8 @@ bot.on("message", async ctx => {
 bot.start()
 
 async function generatePromptAndSend(ctx: BotContext, prompt: string) {
+	if (!ctx.message && !ctx.chat) return
+
 	let typingInterval: NodeJS.Timeout
 	let answer: Message.TextMessage
 	if (ctx.session.debug) {
@@ -180,7 +182,7 @@ async function generatePromptAndSend(ctx: BotContext, prompt: string) {
 				if (!response.data.choices[0].text) {
 					if (ctx.session.debug) {
 						await ctx.api.editMessageText(
-							ctx.chat.id,
+							ctx.chat?.id,
 							answer.message_id,
 							`\[Debug\] ${prompt} Empty response from OpenAI`
 						)
@@ -208,7 +210,7 @@ async function generatePromptAndSend(ctx: BotContext, prompt: string) {
 					} else {
 						await ctx.reply(answerText, {
 							parse_mode: "Markdown",
-							reply_to_message_id: ctx.message.message_id,
+							reply_to_message_id: ctx?.message?.message_id,
 						})
 					}
 				}
