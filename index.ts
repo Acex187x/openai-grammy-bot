@@ -8,6 +8,7 @@ import {
 } from "@grammyjs/hydrate"
 import * as dotenv from "dotenv"
 import { freeStorage } from "@grammyjs/storage-free"
+import { Message } from "grammy/out/types.node"
 
 dotenv.config()
 
@@ -48,9 +49,11 @@ bot.api.config.use(hydrateApi())
 bot.command("ping", ctx => ctx.reply("Pong"))
 
 // Create command handlers to change every session variable. One handler for each variable. Do not use loops
-bot.command(["promptStart", "ps"], ctx => {
+bot.command(["prompt_start", "ps"], ctx => {
 	if (!ctx.message) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
+	if (text.trim().length === 0)
+		return ctx.reply(`promptStart: ${ctx.session.promptStart}`)
 	ctx.session.promptStart = text
 	ctx.reply(`promptStart: ${text}`)
 })
@@ -59,17 +62,30 @@ bot.command(["debug", "d"], ctx => {
 	ctx.session.debug = !ctx.session.debug
 	ctx.reply(`debug: ${ctx.session.debug}`)
 })
-bot.command(["maxTokens", "tokens", "mt"], ctx => {
+bot.command(["max_tokens", "tokens", "mt"], ctx => {
 	if (!ctx.message) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
-	ctx.session.maxTokens = parseInt(text)
-	ctx.reply(`maxTokens: ${text}`)
+	const tokens = parseInt(text) > 2000 ? 2000 : parseInt(text)
+	if (text.trim().length === 0)
+		return ctx.reply(`maxTokens: ${ctx.session.maxTokens}`)
+	ctx.session.maxTokens = tokens
+	ctx.reply(`maxTokens: ${ctx.session.maxTokens}`)
 })
 bot.command(["temp", "temperature", "t"], ctx => {
 	if (!ctx.message) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
-	ctx.session.temperature = parseFloat(text)
-	ctx.reply(`temperature: ${text}`)
+	const temp = parseFloat(text) > 1 ? 1 : parseFloat(text)
+	if (text.trim().length === 0)
+		return ctx.reply(`temperature: ${ctx.session.temperature}`)
+	ctx.session.temperature = temp
+	ctx.reply(`temperature: ${ctx.session.temperature}`)
+})
+
+// Make command /row to generate completions for raw text
+bot.command("raw", async ctx => {
+	if (!ctx.message) return
+	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
+	await generatePromptAndSend(ctx, text)
 })
 
 bot.on("message", async ctx => {
@@ -89,6 +105,9 @@ bot.on("message", async ctx => {
 	)
 		return
 
+	// Remove "разум" from the beginning of the message
+	text = text.replace(/^разум\s*/i, "")
+
 	const name = ctx.from.first_name || ctx.from.username || "Anon"
 
 	const reply =
@@ -102,6 +121,14 @@ bot.on("message", async ctx => {
 
 	const isAnsweredToBot = ctx.message.reply_to_message?.from?.id === ctx.me.id
 
+	console.log({
+		text,
+		name,
+		reply,
+		replyToName,
+		isAnsweredToBot,
+	})
+
 	if (isAnsweredToBot) {
 		replyToName = "you"
 	}
@@ -114,57 +141,80 @@ bot.on("message", async ctx => {
 		text = `${promptStart}. Always answer in the same language in which you are asked and use Markdown formatting when needed. Imagine you are asked "${text}" by ${name}, your answer is:`
 	}
 
-	// Remove "разум" from the beginning of the message
-	text = text.replace(/^разум\s*/i, "")
+	await generatePromptAndSend(ctx, text)
+})
 
-	try {
-		const answerText = ctx.session.debug
-			? `\[Debug\] ${text}`
-			: "_Работаю над ответом..._"
+bot.start()
 
-		const answer = await ctx.reply(answerText, {
+async function generatePromptAndSend(ctx: BotContext, prompt: string) {
+	let typingInterval: NodeJS.Timeout
+	let answer: Message.TextMessage
+	if (ctx.session.debug) {
+		answer = await ctx.reply(`\[Debug\] ${prompt}`, {
 			reply_to_message_id: ctx.message.message_id,
 			parse_mode: "Markdown",
 		})
+	} else {
+		await ctx.replyWithChatAction("typing")
+		typingInterval = setInterval(async () => {
+			await ctx.replyWithChatAction("typing")
+		}, 2000)
+	}
 
+	try {
 		openai
 			.createCompletion({
 				model: "text-davinci-003",
-				prompt: text,
+				prompt,
 				temperature: 0.2,
 				max_tokens: ctx.session.maxTokens || 800,
 			})
 			.then(async response => {
+				if (!ctx.session.debug) clearInterval(typingInterval)
+
+				console.log({
+					response: response.data.choices[0].text,
+					name: ctx.message.from.first_name,
+				})
+
 				if (!response.data.choices[0].text) {
-					await ctx.api.editMessageText(
-						ctx.chat.id,
-						answer.message_id,
-						"Я не знаю что ответить на это :("
-					)
+					if (ctx.session.debug) {
+						await ctx.api.editMessageText(
+							ctx.chat.id,
+							answer.message_id,
+							`\[Debug\] ${prompt} Empty response from OpenAI`
+						)
+					} else {
+						await ctx.reply("I don't know what to answer :(")
+					}
 				} else {
-					let answerText = response.data.choices[0].text
-						.replace(/^"/, "")
-						.replace(/"$/, "")
+					let answerText =
+						"\n" +
+						response.data.choices[0].text
+							.trim()
+							.replace(/^"/g, "")
+							.replace(/"$/g, "")
 
 					if (ctx.session.debug) {
-						answerText = `\[Debug\] ${text} ${answerText}`
-					}
-
-					await ctx.api.editMessageText(
-						ctx.chat.id,
-						answer.message_id,
-						answerText,
-						{
+						answerText = `\[Debug\] ${prompt} ${answerText}`
+						await ctx.api.editMessageText(
+							ctx.chat.id,
+							answer.message_id,
+							answerText,
+							{
+								parse_mode: "Markdown",
+							}
+						)
+					} else {
+						await ctx.reply(answerText, {
 							parse_mode: "Markdown",
-						}
-					)
+							reply_to_message_id: ctx.message.message_id,
+						})
+					}
 				}
 			})
-	} catch (err) {
-		console.log(err)
+	} catch (e) {
+		console.log(e)
+		ctx.reply("Some error occured :( Try again later")
 	}
-
-	return
-})
-
-bot.start()
+}
