@@ -147,7 +147,7 @@ bot.on("message", async ctx => {
 bot.start()
 
 async function generatePromptAndSend(ctx: BotContext, prompt: string) {
-	if (!ctx.message && !ctx.chat) return
+	if (!ctx.message || !ctx.chat) return
 
 	let typingInterval: NodeJS.Timeout
 	let answer: Message.TextMessage
