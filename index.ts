@@ -173,6 +173,7 @@ async function generatePromptAndSend(ctx: BotContext, prompt: string) {
 			})
 			.then(async response => {
 				if (!ctx.session.debug) clearInterval(typingInterval)
+				if (!ctx.message || !ctx.chat) return
 
 				console.log({
 					response: response.data.choices[0].text,
@@ -200,7 +201,7 @@ async function generatePromptAndSend(ctx: BotContext, prompt: string) {
 					if (ctx.session.debug) {
 						answerText = `\[Debug\] ${prompt} ${answerText}`
 						await ctx.api.editMessageText(
-							ctx.chat.id,
+							ctx.chat?.id,
 							answer.message_id,
 							answerText,
 							{
