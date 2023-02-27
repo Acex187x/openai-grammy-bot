@@ -34,7 +34,8 @@ interface SessionData {
 bot.use(
 	session({
 		initial: () => ({
-			promptStart: "Imagine you are a telegram bot",
+			promptStart:
+				"Imagine you are a telegram bot. Always answer in the same language as the question.",
 			debug: false,
 			maxTokens: 800,
 			temperature: 0.2,
@@ -136,9 +137,9 @@ bot.on("message", async ctx => {
 	const promptStart = ctx.session.promptStart || ""
 
 	if (reply) {
-		text = `${promptStart}. Always answer in the same language in which you are asked and use Markdown formatting when needed. Imagine ${replyToName} wrote message "${reply}" and you are asked by ${name} "${text}" about it, your answer is:`
+		text = `${promptStart}. Use Markdown formatting when needed. Imagine ${replyToName} wrote message "${reply}" and you are asked by ${name} "${text}" about it, your answer is:`
 	} else {
-		text = `${promptStart}. Always answer in the same language in which you are asked and use Markdown formatting when needed. Imagine you are asked "${text}" by ${name}, your answer is:`
+		text = `${promptStart}. Use Markdown formatting when needed. Imagine you are asked "${text}" by ${name}, your answer is:`
 	}
 
 	await generatePromptAndSend(ctx, text)
