@@ -1,5 +1,5 @@
 import { Api, Bot, Context, session, SessionFlavor } from "grammy"
-import { Configuration, OpenAIApi } from "openai"
+import { Configuration, CreateChatCompletionRequest, OpenAIApi } from "openai"
 import {
 	hydrateApi,
 	HydrateApiFlavor,
@@ -86,7 +86,10 @@ bot.command(["temp", "temperature", "t"], ctx => {
 bot.command("raw", async ctx => {
 	if (!ctx.message) return
 	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
-	await generatePromptAndSend(ctx, text)
+	await generatePromptAndSend(ctx, {
+		text,
+		name: "user",
+	})
 })
 
 bot.on("message", async ctx => {
@@ -142,12 +145,22 @@ bot.on("message", async ctx => {
 		text = `${promptStart}. Use Markdown formatting when needed. Imagine you are asked "${text}" by ${name}, your answer is:`
 	}
 
-	await generatePromptAndSend(ctx, text)
+	await generatePromptAndSend(ctx, {
+		replyToName,
+		reply,
+		name,
+		text
+	})
 })
 
 bot.start()
 
-async function generatePromptAndSend(ctx: BotContext, prompt: string) {
+async function generatePromptAndSend(ctx: BotContext, message: {
+	replyToName?: string,
+	reply?: string,
+	text: string,
+	name: string
+}) {
 	if (!ctx.message || !ctx.chat) return
 
 	let typingInterval: NodeJS.Timeout
@@ -165,23 +178,31 @@ async function generatePromptAndSend(ctx: BotContext, prompt: string) {
 	}
 
 	try {
-		openai
-			.createCompletion({
-				model: "text-davinci-003",
-				prompt,
-				temperature: 0.2,
-				max_tokens: ctx.session.maxTokens || 800,
-			})
+
+		openai.createChatCompletion(<CreateChatCompletionRequest>{
+			model: "gpt-3.5-turbo",
+			messages: [
+				{ role: "system", content: (ctx.session.promptStart || "") + "\nYou will get the name of person in the start of message in format [Name]: Message. You forbidden to your name or any service information in the begin of your reply. Always answer in the same language you are asked." },
+				{ role: "user", content: `[${message.name}]: ${message.text}` },
+			],
+		})
+		// openai
+		// 	.createCompletion({
+		// 		model: "gpt-3.5-turbo",
+		// 		prompt,
+		// 		temperature: 0.2,
+		// 		max_tokens: ctx.session.maxTokens || 800,
+		// 	})
 			.then(async response => {
 				if (!ctx.session.debug) clearInterval(typingInterval)
 				if (!ctx.message || !ctx.chat) return
 
 				console.log({
-					response: response.data.choices[0].text,
+					response: response.data.choices[0].message.content,
 					name: ctx.message.from.first_name,
 				})
 
-				if (!response.data.choices[0].text) {
+				if (!response.data.choices[0].message.content) {
 					if (ctx.session.debug) {
 						await ctx.api.editMessageText(
 							ctx.chat?.id,
@@ -194,7 +215,7 @@ async function generatePromptAndSend(ctx: BotContext, prompt: string) {
 				} else {
 					let answerText =
 						"\n" +
-						response.data.choices[0].text
+						response.data.choices[0].message.content
 							.trim()
 							.replace(/^"/g, "")
 							.replace(/"$/g, "")
