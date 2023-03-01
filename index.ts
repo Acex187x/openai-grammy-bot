@@ -166,10 +166,10 @@ async function generatePromptAndSend(ctx: BotContext, message: {
 	let typingInterval: NodeJS.Timeout
 	let answer: Message.TextMessage
 	if (ctx.session.debug) {
-		answer = await ctx.reply(`\[Debug\] ${prompt}`, {
-			reply_to_message_id: ctx.message.message_id,
-			parse_mode: "Markdown",
-		})
+		// answer = await ctx.reply(`\[Debug\] ${prompt}`, {
+		// 	reply_to_message_id: ctx.message.message_id,
+		// 	parse_mode: "Markdown",
+		// })
 	} else {
 		await ctx.replyWithChatAction("typing")
 		typingInterval = setInterval(async () => {
@@ -196,6 +196,7 @@ async function generatePromptAndSend(ctx: BotContext, message: {
 			.then(async response => {
 				if (!ctx.session.debug) clearInterval(typingInterval)
 				if (!ctx.message || !ctx.chat) return
+				if (!response.data.choices[0] || response.data.choices[0].message) return;
 
 				console.log({
 					response: response.data.choices[0].message.content,
@@ -215,21 +216,21 @@ async function generatePromptAndSend(ctx: BotContext, message: {
 				} else {
 					let answerText =
 						"\n" +
-						response.data.choices[0].message.content
+						(response.data.choices[0].message.content || "")
 							.trim()
 							.replace(/^"/g, "")
 							.replace(/"$/g, "")
 
 					if (ctx.session.debug) {
-						answerText = `\[Debug\] ${prompt} ${answerText}`
-						await ctx.api.editMessageText(
-							ctx.chat?.id,
-							answer.message_id,
-							answerText,
-							{
-								parse_mode: "Markdown",
-							}
-						)
+						// answerText = `\[Debug\] ${prompt} ${answerText}`
+						// await ctx.api.editMessageText(
+						// 	ctx.chat?.id,
+						// 	answer.message_id,
+						// 	answerText,
+						// 	{
+						// 		parse_mode: "Markdown",
+						// 	}
+						// )
 					} else {
 						await ctx.reply(answerText, {
 							parse_mode: "Markdown",
