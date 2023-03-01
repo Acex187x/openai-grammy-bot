@@ -196,7 +196,7 @@ async function generatePromptAndSend(ctx: BotContext, message: {
 			.then(async response => {
 				if (!ctx.session.debug) clearInterval(typingInterval)
 				if (!ctx.message || !ctx.chat) return
-				if (!response.data.choices[0] || response.data.choices[0].message) return;
+				if (!response.data.choices[0] || !response.data.choices[0].message) return;
 
 				console.log({
 					response: response.data.choices[0].message.content,
