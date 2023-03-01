@@ -205,11 +205,11 @@ async function generatePromptAndSend(ctx: BotContext, message: {
 
 				if (!response.data.choices[0].message.content) {
 					if (ctx.session.debug) {
-						await ctx.api.editMessageText(
-							ctx.chat?.id,
-							answer.message_id,
-							`\[Debug\] ${prompt} Empty response from OpenAI`
-						)
+						// await ctx.api.editMessageText(
+						// 	ctx.chat?.id,
+						// 	answer.message_id,
+						// 	`\[Debug\] ${prompt} Empty response from OpenAI`
+						// )
 					} else {
 						await ctx.reply("I don't know what to answer :(")
 					}
