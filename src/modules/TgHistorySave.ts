@@ -54,6 +54,7 @@ export class TgHistorySave {
 		let replyToMessage = this.ctx.session.messages.find(m => m.id === replyToId)
 
 		while (replyToMessage) {
+			if (!replyToMessage) break;
 			replyTree.push(replyToMessage)
 			if (replyToMessage.reply_to_id) {
 				replyToMessage = this.ctx.session.messages.find(m => m.id === replyToMessage.reply_to_id)
@@ -92,9 +93,9 @@ export class TgHistorySave {
 		return this.convertMessageStoredToOpenAIChat(history);
 	}
 
-	public convertTgMessageToMessageStored(message: Message): MessageStored {
+	public convertTgMessageToMessageStored(message: Message): MessageStored | null {
 
-		if (!message) return null;
+		if (!message || !message.from) return null;
 		const text = message.text || message.caption || ""
 		if (!text) return null;
 
