@@ -118,6 +118,8 @@ bot.on("message:text", async ctx => {
 			],
 		})
 
+		if (!completion.data.choices[0] || !completion.data.choices[0].message) return;
+
 		const reply = completion.data.choices[0].message.content
 
 		const replyMessage = await ctx.reply(reply, {
@@ -129,7 +131,7 @@ bot.on("message:text", async ctx => {
 
 	} catch (err) {
 		console.error(err)
-		console.log(err.response?.data)
+		// console.log(err.response?.data)
 	} finally {
 		clearInterval(typingInterval)
 	}
