@@ -1,9 +1,15 @@
 {
   "compilerOptions": {
+    "skipLibCheck": true,
+    "target": "es6",
     "module": "commonjs",
-    "noImplicitAny": true,
-    "removeComments": true,
-    "preserveConstEnums": true,
-    "sourceMap": false
-  }
+    "moduleResolution": "node",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "outDir": "./build",
+    "rootDir": "src",
+  },
+  "include": ["src/**/*.ts", "src/*.ts"],
+    "exclude": ["node_modules"]
 }

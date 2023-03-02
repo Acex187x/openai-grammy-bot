@@ -2,10 +2,11 @@
   "name": "openai-grammy-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {
-    "start": "ts-node index.ts",
-    "pm2-start": "pm2 start index.ts --interpreter ts-node --name openai-grammy-bot"
+    "dev": "nodemon",
+    "start": "ts-node src/index.ts",
+    "pm2-start": "pm2 start src/index.ts --interpreter ts-node --name openai-grammy-bot"
   },
   "author": "",
   "license": "ISC",
@@ -15,6 +16,7 @@
     "cld": "^2.8.4",
     "dotenv": "^16.0.3",
     "franc": "^6.1.0",
+    "gpt-3-encoder": "^1.1.4",
     "grammy": "^1.13.1",
     "langdetect": "^0.2.1",
     "languagedetect": "^2.0.0",
