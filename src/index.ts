@@ -13,8 +13,17 @@ import { BotContext, SessionData } from "./types"
 import { TgHistorySave } from "./modules/TgHistorySave"
 import { checkIfMessageAddressedToBot } from "./modules/Utils"
 import { BasicPrompt } from "./modules/Const"
+import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb"
+import { MongoClient } from "mongodb"
 
 dotenv.config()
+
+function getMongoCollection() {
+	if (!process.env.MONGO_URL) return null
+	const client = new MongoClient(process.env.MONGO_URL)
+	const db = client.db("bot")
+	return db.collection<ISession>("users")
+}
 
 const configuration = new Configuration({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -25,19 +34,39 @@ const bot = new Bot<BotContext, HydrateApiFlavor<Api>>(
 	process.env.BOT_TOKEN || ""
 )
 
-bot.use(
-	session({
-		initial: () => ({
-			promptStart:
-				"Imagine you are a telegram bot. Always answer in the same language as the question.",
-			debug: false,
-			maxTokens: 800,
-			temperature: 0.2,
-			messages: [],
-		}) as SessionData,
-		storage: freeStorage<SessionData>(bot.token),
-	})
-)
+if (process.env.MONGO_URL) {
+	const collection = getMongoCollection()
+	if (!collection) throw new Error("No collection")
+	bot.use(
+		session({
+			initial: () =>
+				({
+					promptStart:
+						"Imagine you are a telegram bot. Always answer in the same language as the question.",
+					debug: false,
+					maxTokens: 800,
+					temperature: 0.2,
+					messages: [],
+				} as SessionData),
+			storage: new MongoDBAdapter({ collection }),
+		})
+	)
+} else {
+	bot.use(
+		session({
+			initial: () =>
+				({
+					promptStart:
+						"Imagine you are a telegram bot. Always answer in the same language as the question.",
+					debug: false,
+					maxTokens: 800,
+					temperature: 0.2,
+					messages: [],
+				} as SessionData),
+			storage: freeStorage<SessionData>(bot.token),
+		})
+	)
+}
 
 bot.use(hydrateContext())
 bot.api.config.use(hydrateApi())
@@ -80,16 +109,16 @@ bot.command(["temp", "temperature", "t"], ctx => {
 bot.on("message:text", async ctx => {
 	if (!ctx.message.text) return
 
-	const tgSaveUtil = new TgHistorySave(ctx);
+	const tgSaveUtil = new TgHistorySave(ctx)
 	tgSaveUtil.saveMessage()
 
 	const isMessageForBot = checkIfMessageAddressedToBot(ctx.message, ctx)
 
 	if (!isMessageForBot) {
-		return;
+		return
 	}
 
-	let history;
+	let history
 	if (ctx.message.reply_to_message) {
 		history = tgSaveUtil.getReplyTree()
 	} else {
@@ -103,22 +132,32 @@ bot.on("message:text", async ctx => {
 	}, 2000)
 
 	console.log([
-		{ role: "system", content: (ctx.session.promptStart || "") + `. ${BasicPrompt}` },
+		{
+			role: "system",
+			content: (ctx.session.promptStart || "") + `. ${BasicPrompt}`,
+		},
 		...history,
-	]);
+	])
 
 	try {
-		const completion = await openai.createChatCompletion(<CreateChatCompletionRequest>{
+		const completion = await openai.createChatCompletion(<
+			CreateChatCompletionRequest
+		>{
 			model: "gpt-3.5-turbo",
 			temperature: ctx.session.temperature,
 			max_tokens: ctx.session.maxTokens,
 			messages: [
-				{ role: "system", content: (ctx.session.promptStart || "") + `. ${BasicPrompt}` },
+				{
+					role: "system",
+					content:
+						(ctx.session.promptStart || "") + `. ${BasicPrompt}`,
+				},
 				...history,
 			],
 		})
 
-		if (!completion.data.choices[0] || !completion.data.choices[0].message) return;
+		if (!completion.data.choices[0] || !completion.data.choices[0].message)
+			return
 
 		const reply = completion.data.choices[0].message.content
 
@@ -127,8 +166,7 @@ bot.on("message:text", async ctx => {
 			reply_to_message_id: ctx.message.message_id,
 		})
 
-		tgSaveUtil.saveMessage(replyMessage);
-
+		tgSaveUtil.saveMessage(replyMessage)
 	} catch (err) {
 		console.error(err)
 		// console.log(err.response?.data)

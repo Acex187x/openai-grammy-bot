@@ -19,8 +19,8 @@ export class TgHistorySave {
 
 	public saveMessage(message: Message = this.ctx.message as Message) {
 
-		// If storage has more than 100 messages, remove the oldest one
-		if (this.ctx.session.messages.length > 100) {
+		// While storage has more than 15000 bytes, remove the oldest one
+		while (JSON.stringify(this.ctx.session.messages).length > 15000) {
 			this.ctx.session.messages.shift()
 		}
 
@@ -29,6 +29,8 @@ export class TgHistorySave {
 		if (!messageStored) return;
 
 		this.ctx.session.messages.push(messageStored)
+
+		console.log(JSON.stringify(this.ctx.session).length);
 	}
 
 	public async saveMessageEdited(message: Message = this.ctx.message as Message) {
@@ -47,23 +49,24 @@ export class TgHistorySave {
 	// Method to get reply tree for a message
 	public getReplyTree(tokenLimit = 3500) {
 
-		const replyToId = this.ctx.message?.reply_to_message?.message_id
+		const message = this.ctx.message as Message
+
+		const replyToId = message?.reply_to_message?.message_id
 		if (!replyToId) return []
 
 		const replyTree = [];
 		let replyToMessage = this.ctx.session.messages.find(m => m.id === replyToId)
 
 		while (replyToMessage) {
-			if (!replyToMessage) break;
 			replyTree.push(replyToMessage)
-			if (replyToMessage.reply_to_id) {
-				replyToMessage = this.ctx.session.messages.find(m => m.id === replyToMessage.reply_to_id)
+			if (replyToMessage?.reply_to_id) {
+				replyToMessage = this.ctx.session.messages.find(m => m.id === replyToMessage?.reply_to_id)
 			} else {
 				break;
 			}
 		}
 
-		let res = [...replyTree.reverse(), ...(this.ctx.message ? [this.convertTgMessageToMessageStored(this.ctx.message)] : [])];
+		let res = [...replyTree.reverse(), ...(message ? [this.convertTgMessageToMessageStored(message)] : [])];
 
 		let tokens = this.tokenizeMessageStored(res);
 
@@ -93,11 +96,9 @@ export class TgHistorySave {
 		return this.convertMessageStoredToOpenAIChat(history);
 	}
 
-	public convertTgMessageToMessageStored(message: Message): MessageStored | null {
+	public convertTgMessageToMessageStored(message: Message): MessageStored {
 
-		if (!message || !message.from) return null;
 		const text = message.text || message.caption || ""
-		if (!text) return null;
 
 		const name = message.from?.first_name || message.from?.username || "Anon"
 		const id = message.message_id
@@ -108,7 +109,7 @@ export class TgHistorySave {
 			id,
 			name,
 			...(reply_to_id ? {reply_to_id} : {}),
-			is_ai: message.from.is_bot,
+			is_ai: message.from?.is_bot || false,
 		}
 
 		return messageStored
@@ -128,7 +129,7 @@ export class TgHistorySave {
 	public convertMessageToOpenAIChat(messageStored: Message[] | Message ): ChatCompletionRequestMessage[] {
 
 		let messages = Array.isArray(messageStored) ? messageStored : [messageStored];
-		const messagesStored = messages.map(el => this.convertTgMessageToMessageStored(el));
+		const messagesStored = messages.map(el => this.convertTgMessageToMessageStored(el)).filter(el => el)
 
 		return messagesStored.map((message) => ({
 			role: message.is_ai ? ChatCompletionRequestMessageRoleEnum.Assistant : ChatCompletionRequestMessageRoleEnum.User,
