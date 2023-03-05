@@ -15,13 +15,17 @@ import { checkIfMessageAddressedToBot } from "./modules/Utils"
 import { BasicPrompt } from "./modules/Const"
 import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb"
 import { MongoClient } from "mongodb"
+import { db } from "./db"
+import {
+	getPersonasList,
+	personasMenu,
+	PersonaSwitcher,
+} from "./modules/PersonaSwitcher"
 
 dotenv.config()
 
 function getMongoCollection() {
 	if (!process.env.MONGO_URL) return null
-	const client = new MongoClient(process.env.MONGO_URL)
-	const db = client.db("bot")
 	return db.collection<ISession>("users")
 }
 
@@ -44,8 +48,9 @@ if (process.env.MONGO_URL) {
 					promptStart:
 						"Imagine you are a telegram bot. Always answer in the same language as the question.",
 					debug: false,
-					maxTokens: 800,
+					maxTokens: 1500,
 					temperature: 0.2,
+					rememberContext: true,
 					messages: [],
 				} as SessionData),
 			storage: new MongoDBAdapter({ collection }),
@@ -59,8 +64,9 @@ if (process.env.MONGO_URL) {
 					promptStart:
 						"Imagine you are a telegram bot. Always answer in the same language as the question.",
 					debug: false,
-					maxTokens: 800,
+					maxTokens: 1500,
 					temperature: 0.2,
+					rememberContext: true,
 					messages: [],
 				} as SessionData),
 			storage: freeStorage<SessionData>(bot.token),
@@ -106,8 +112,25 @@ bot.command(["temp", "temperature", "t"], ctx => {
 	ctx.reply(`temperature: ${ctx.session.temperature}`)
 })
 
-bot.on("message", async ctx => {
+// Enables bot's ability to remember context without reply
+bot.command(["context", "rc"], ctx => {
+	if (!ctx.message) return
+	ctx.session.rememberContext = !ctx.session.rememberContext
+	ctx.reply(`rememberContext: ${ctx.session.rememberContext}`)
+})
 
+bot.use(personasMenu)
+
+bot.command(["mood", "pers", "persona"], async ctx => {
+	const personaSwitcher = new PersonaSwitcher(ctx)
+
+	await ctx.reply(await getPersonasList(), {
+		reply_markup: personasMenu,
+		parse_mode: "Markdown",
+	})
+})
+
+bot.on("message", async ctx => {
 	if (!(ctx.message.text || ctx.message.caption)) return
 
 	const tgSaveUtil = new TgHistorySave(ctx)
@@ -123,8 +146,11 @@ bot.on("message", async ctx => {
 	if (ctx.message.reply_to_message) {
 		history = tgSaveUtil.getReplyTree()
 	} else {
-		history = tgSaveUtil.convertMessageToOpenAIChat(ctx.message)
-		// history = tgSaveUtil.getHistory(3000)
+		if (ctx.session.rememberContext) {
+			history = tgSaveUtil.getHistory(1000)
+		} else {
+			history = tgSaveUtil.convertMessageToOpenAIChat(ctx.message)
+		}
 	}
 
 	await ctx.replyWithChatAction("typing")

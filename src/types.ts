@@ -2,11 +2,11 @@ import { Context, SessionFlavor } from "grammy"
 import { HydrateFlavor } from "@grammyjs/hydrate"
 
 export interface MessageStored {
-	text: string,
-	id: number,
-	name: string,
-	reply_to_id?: number,
-	is_ai: boolean,
+	text: string
+	id: number
+	name: string
+	reply_to_id?: number
+	is_ai: boolean
 }
 
 export interface SessionData {
@@ -14,8 +14,19 @@ export interface SessionData {
 	promptStart: string
 	debug: boolean
 	maxTokens: number
-	temperature: number,
-	messages: MessageStored[],
+	temperature: number
+	rememberContext: boolean
+	messages: MessageStored[]
+	currentPersona: string
 }
 
-export type BotContext = Context & HydrateFlavor<Context> & SessionFlavor<SessionData>
+export type BotContext = Context &
+	HydrateFlavor<Context> &
+	SessionFlavor<SessionData>
+
+export interface Persona {
+	id: string
+	name: string
+	description: string
+	prompt: string
+}
