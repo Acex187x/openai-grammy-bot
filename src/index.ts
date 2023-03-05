@@ -16,11 +16,7 @@ import { BasicPrompt } from "./modules/Const"
 import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb"
 import { MongoClient } from "mongodb"
 import { db } from "./db"
-import {
-	getPersonasList,
-	personasMenu,
-	PersonaSwitcher,
-} from "./modules/PersonaSwitcher"
+import { getPersonasList, personasMenu } from "./modules/PersonaSwitcher"
 
 dotenv.config()
 
@@ -52,6 +48,7 @@ if (process.env.MONGO_URL) {
 					temperature: 0.2,
 					rememberContext: true,
 					messages: [],
+					currentPersona: "default",
 				} as SessionData),
 			storage: new MongoDBAdapter({ collection }),
 		})
@@ -68,6 +65,7 @@ if (process.env.MONGO_URL) {
 					temperature: 0.2,
 					rememberContext: true,
 					messages: [],
+					currentPersona: "default",
 				} as SessionData),
 			storage: freeStorage<SessionData>(bot.token),
 		})
@@ -122,8 +120,6 @@ bot.command(["context", "rc"], ctx => {
 bot.use(personasMenu)
 
 bot.command(["mood", "pers", "persona"], async ctx => {
-	const personaSwitcher = new PersonaSwitcher(ctx)
-
 	await ctx.reply(await getPersonasList(), {
 		reply_markup: personasMenu,
 		parse_mode: "Markdown",
