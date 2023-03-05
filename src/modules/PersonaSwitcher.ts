@@ -1,6 +1,6 @@
 import { BotContext, Persona } from "../types"
 import { db } from "../db"
-import { Menu } from "@grammyjs/menu"
+import { Menu, MenuRange } from "@grammyjs/menu"
 
 export const personasMenu = new Menu<BotContext>("personas")
 personasMenu.dynamic(async (ctx: BotContext, range) => {
@@ -13,10 +13,10 @@ personasMenu.dynamic(async (ctx: BotContext, range) => {
 				persona.name
 			}`,
 			ctx => {
+				const isChanged = ctx.session.currentPersona != persona.id
 				ctx.session.currentPersona = persona.id
 				ctx.session.promptStart = persona.prompt
-				console.log(ctx.session)
-				ctx.menu.update()
+				isChanged && ctx.menu.update()
 			}
 		)
 	})
