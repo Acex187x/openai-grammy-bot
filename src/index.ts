@@ -106,8 +106,9 @@ bot.command(["temp", "temperature", "t"], ctx => {
 	ctx.reply(`temperature: ${ctx.session.temperature}`)
 })
 
-bot.on("message:text", async ctx => {
-	if (!ctx.message.text) return
+bot.on("message", async ctx => {
+
+	if (!(ctx.message.text || ctx.message.caption)) return
 
 	const tgSaveUtil = new TgHistorySave(ctx)
 	tgSaveUtil.saveMessage()
@@ -169,7 +170,6 @@ bot.on("message:text", async ctx => {
 		tgSaveUtil.saveMessage(replyMessage)
 	} catch (err) {
 		console.error(err)
-		// console.log(err.response?.data)
 	} finally {
 		clearInterval(typingInterval)
 	}
