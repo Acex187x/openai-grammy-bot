@@ -212,6 +212,7 @@ if (process.env.DOMAIN && process.env.PORT) {
 	app.use(`/${secretPath}`, webhookCallback(bot, "express"));
 
 	app.listen(Number(process.env.PORT), async () => {
+		console.log(`Bot now listening on https://${domain}/${secretPath}!`);
 		await bot.api.setWebhook(`https://${domain}/${secretPath}`);
 	});
 } else {
