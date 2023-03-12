@@ -203,7 +203,7 @@ bot.catch = (err) => {
 	console.error(err);
 }
 
-if (process.env.WEBBHOOK_PORT) {
+if (process.env.DOMAIN && process.env.PORT) {
 	const domain = String(process.env.DOMAIN);
 	const secretPath = String(process.env.BOT_TOKEN);
 	const app = express();
