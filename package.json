@@ -17,6 +17,7 @@
     "@grammyjs/storage-mongodb": "^2.1.4",
     "cld": "^2.8.4",
     "dotenv": "^16.0.3",
+    "express": "^4.18.2",
     "franc": "^6.1.0",
     "gpt-3-encoder": "^1.1.4",
     "grammy": "^1.13.1",
@@ -27,6 +28,7 @@
     "prettier": "^2.8.3"
   },
   "devDependencies": {
+    "@types/express": "^4.17.17",
     "typescript": "^4.9.5"
   },
   "prettier": {
