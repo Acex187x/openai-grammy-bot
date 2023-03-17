@@ -25,9 +25,8 @@ export class BotHandlers {
 			const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
 			if (validate(parseFloat(text))) {
 				ctx.session[key] = parseFloat(text)
-				ctx.reply(`${key}: ${ctx.session[key]}`)
 			}
-			ctx.reply(`maxTokens: ${ctx.session.maxTokens}`)
+			ctx.reply(`${key}: ${ctx.session[key]}`)
 		})
 	}
 
@@ -44,7 +43,7 @@ export class BotHandlers {
 	}
 
 	async initConfigurationHandlers() {
-		this.initStringConfigHandler(["prompt_start", "ps"], "promptEnd")
+		this.initStringConfigHandler(["prompt_start", "ps"], "promptStart")
 		this.initBooleanConfigHandler(["debug", "d"], "debug")
 		this.initBooleanConfigHandler(["context", "rc"], "rememberContext")
 		this.initNumberConfigHandler(

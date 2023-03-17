@@ -1,4 +1,11 @@
-import { Api, Bot, Context, session, SessionFlavor, webhookCallback } from "grammy"
+import {
+	Api,
+	Bot,
+	Context,
+	session,
+	SessionFlavor,
+	webhookCallback,
+} from "grammy"
 import { Configuration, CreateChatCompletionRequest, OpenAIApi } from "openai"
 import {
 	hydrateApi,
@@ -17,8 +24,8 @@ import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb"
 import { MongoClient } from "mongodb"
 import { db } from "./db"
 import { getPersonasList, personasMenu } from "./modules/PersonaSwitcher"
-import express from "express";
-
+import express from "express"
+import { BotHandlers } from "./modules/BotHandlers"
 
 dotenv.config()
 
@@ -78,48 +85,11 @@ bot.use(hydrateContext())
 bot.api.config.use(hydrateApi())
 
 bot.command("ping", ctx => ctx.reply("Pong"))
-
-// Create command handlers to change every session variable. One handler for each variable. Do not use loops
-bot.command(["prompt_start", "ps"], ctx => {
-	if (!ctx.message) return
-	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
-	if (text.trim().length === 0)
-		return ctx.reply(`promptStart: ${ctx.session.promptStart}`)
-	ctx.session.promptStart = text
-	ctx.reply(`promptStart: ${text}`)
-})
-bot.command(["debug", "d"], ctx => {
-	if (!ctx.message) return
-	ctx.session.debug = !ctx.session.debug
-	ctx.reply(`debug: ${ctx.session.debug}`)
-})
-bot.command(["max_tokens", "tokens", "mt"], ctx => {
-	if (!ctx.message) return
-	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
-	const tokens = parseInt(text) > 2000 ? 2000 : parseInt(text)
-	if (text.trim().length === 0)
-		return ctx.reply(`maxTokens: ${ctx.session.maxTokens}`)
-	ctx.session.maxTokens = tokens
-	ctx.reply(`maxTokens: ${ctx.session.maxTokens}`)
-})
-bot.command(["temp", "temperature", "t"], ctx => {
-	if (!ctx.message) return
-	const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
-	const temp = parseFloat(text) > 1 ? 1 : parseFloat(text)
-	if (text.trim().length === 0)
-		return ctx.reply(`temperature: ${ctx.session.temperature}`)
-	ctx.session.temperature = temp
-	ctx.reply(`temperature: ${ctx.session.temperature}`)
-})
-
-// Enables bot's ability to remember context without reply
-bot.command(["context", "rc"], ctx => {
-	if (!ctx.message) return
-	ctx.session.rememberContext = !ctx.session.rememberContext
-	ctx.reply(`rememberContext: ${ctx.session.rememberContext}`)
-})
-
 bot.use(personasMenu)
+
+const botHandlers = new BotHandlers(bot)
+
+botHandlers.registerHandlers()
 
 bot.command(["mood", "pers", "persona"], async ctx => {
 	await ctx.reply(await getPersonasList(), {
@@ -199,24 +169,25 @@ bot.on("message", async ctx => {
 	}
 })
 
-bot.catch = (err) => {
-	console.error(err);
+bot.catch = err => {
+	console.error(err)
 }
 
 if (process.env.DOMAIN && process.env.PORT) {
-	const domain = String(process.env.DOMAIN);
-	const secretPath = String(process.env.BOT_TOKEN);
-	const app = express();
+	const domain = String(process.env.DOMAIN)
+	const secretPath = String(process.env.BOT_TOKEN)
+	const app = express()
 
-	app.use(express.json());
-	app.use(`/${secretPath}`, webhookCallback(bot, "express", "return", 60 * 1000));
+	app.use(express.json())
+	app.use(
+		`/${secretPath}`,
+		webhookCallback(bot, "express", "return", 60 * 1000)
+	)
 
 	app.listen(Number(process.env.PORT), async () => {
-		console.log(`Bot now listening on port ${process.env.PORT}!`);
-		await bot.api.setWebhook(`https://${domain}/${secretPath}`);
-	});
+		console.log(`Bot now listening on port ${process.env.PORT}!`)
+		await bot.api.setWebhook(`https://${domain}/${secretPath}`)
+	})
 } else {
 	bot.start()
 }
-
-
