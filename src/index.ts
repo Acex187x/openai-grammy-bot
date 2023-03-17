@@ -149,6 +149,8 @@ bot.on("message", async ctx => {
 				},
 				...history,
 			],
+		}, {
+			timeout: 2000,
 		})
 
 		if (!completion.data.choices[0] || !completion.data.choices[0].message)
@@ -174,15 +176,12 @@ bot.catch = err => {
 }
 
 if (process.env.DOMAIN && process.env.PORT) {
-	const domain = String(process.env.DOMAIN)
-	const secretPath = String(process.env.BOT_TOKEN)
-	const app = express()
+	const domain = String(process.env.DOMAIN);
+	const secretPath = String(process.env.BOT_TOKEN);
+	const app = express();
 
-	app.use(express.json())
-	app.use(
-		`/${secretPath}`,
-		webhookCallback(bot, "express", "return", 60 * 1000)
-	)
+	app.use(express.json());
+	app.use(`/${secretPath}`, webhookCallback(bot, "express", "return", 60 * 3 * 1000));
 
 	app.listen(Number(process.env.PORT), async () => {
 		console.log(`Bot now listening on port ${process.env.PORT}!`)
