@@ -138,7 +138,7 @@ bot.on("message", async ctx => {
 		const completion = await openai.createChatCompletion(<
 			CreateChatCompletionRequest
 		>{
-			model: "gpt-3.5-turbo",
+			model: process.env.MODEL || "gpt-3.5-turbo",
 			temperature: ctx.session.temperature,
 			max_tokens: ctx.session.maxTokens,
 			messages: [
@@ -150,7 +150,7 @@ bot.on("message", async ctx => {
 				...history,
 			],
 		}, {
-			timeout: 2000,
+			timeout: 60 * 2 * 1000,
 		})
 
 		if (!completion.data.choices[0] || !completion.data.choices[0].message)
