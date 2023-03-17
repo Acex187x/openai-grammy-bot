@@ -1,5 +1,5 @@
 import { Bot } from "grammy"
-import { BotContext } from "../types"
+import { BotContext, SessionData } from "../types"
 
 export class BotHandlers {
 	bot: Bot<BotContext>
@@ -7,42 +7,45 @@ export class BotHandlers {
 		this.bot = bot
 	}
 
-	async initBooleanConfigHandler(command: string | string[], key: string) {
+	initBooleanConfigHandler(command: string | string[], key: keyof SessionData) {
 		this.bot.command(command, ctx => {
 			if (!ctx.message) return
+			// @ts-ignore
 			ctx.session[key] = !ctx.session[key]
 			ctx.reply(`${key}: ${ctx.session[key]}`)
 		})
 	}
 
-	async initNumberConfigHandler(
+	initNumberConfigHandler(
 		command: string | string[],
-		key: string,
+		key: keyof SessionData,
 		validate: (value: number) => boolean
 	) {
 		this.bot.command(command, ctx => {
 			if (!ctx.message) return
 			const text = ctx.message.text?.split(" ").slice(1).join(" ") || ""
 			if (validate(parseFloat(text))) {
+				// @ts-ignore
 				ctx.session[key] = parseFloat(text)
 			}
 			ctx.reply(`${key}: ${ctx.session[key]}`)
 		})
 	}
 
-	async initStringConfigHandler(command: string | string[], key: string) {
+	 initStringConfigHandler(command: string | string[], key: keyof SessionData) {
 		this.bot.command(command, ctx => {
 			if (!ctx.message) return
 			const text =
 				ctx.message.text?.split(" ").slice(1).join(" ").trim() || ""
 			if (text) {
+				// @ts-ignore
 				ctx.session[key] = text
 			}
 			ctx.reply(`${key}: ${ctx.session[key]}`)
 		})
 	}
 
-	async initConfigurationHandlers() {
+	initConfigurationHandlers() {
 		this.initStringConfigHandler(["prompt_start", "ps"], "promptStart")
 		this.initBooleanConfigHandler(["debug", "d"], "debug")
 		this.initBooleanConfigHandler(["context", "rc"], "rememberContext")
