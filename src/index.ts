@@ -103,7 +103,7 @@ if (process.env.DOMAIN && process.env.PORT) {
 	app.use(express.json())
 	app.use(
 		`/${secretPath}`,
-		webhookCallback(bot, "express", "return", 60 * 1000)
+		webhookCallback(bot, "express", "return", 60 * 3 * 1000)
 	)
 
 	app.listen(Number(process.env.PORT), async () => {
