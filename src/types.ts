@@ -1,5 +1,6 @@
 import { Api, Context, SessionFlavor } from "grammy"
 import { HydrateApiFlavor, HydrateFlavor } from "@grammyjs/hydrate"
+import { MaybeArray } from "grammy/out/context"
 
 export interface MessageStored {
 	text: string

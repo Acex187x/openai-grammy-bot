@@ -1,6 +1,8 @@
 import { Bot, CommandMiddleware } from "grammy"
 import { MaybeArray } from "grammy/out/context"
-import { BotCommand, BotContext } from "../types"
+import { ChatCompletion } from "../modules/ChatCompletion"
+import { getPersonasList, personasMenu } from "../modules/PersonaSwitcher"
+import { BotCommand, BotContext, SessionData } from "../types"
 
 export class BotHandlers {
 	bot: Bot<BotContext>
@@ -15,7 +17,10 @@ export class BotHandlers {
 		description?: string
 	) {
 		this.bot.command(command, middleware)
-		this.commands.push({ command: command.toString(), description })
+		this.commands.push({
+			command: Array.isArray(command) ? command[0] : command,
+			description: description || "",
+		})
 	}
 
 	async initBooleanConfigHandler(
@@ -27,7 +32,9 @@ export class BotHandlers {
 			command,
 			ctx => {
 				if (!ctx.message) return
+				// @ts-ignore
 				ctx.session[key] = !ctx.session[key]
+				// @ts-ignore
 				ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
@@ -44,11 +51,14 @@ export class BotHandlers {
 			command,
 			ctx => {
 				if (!ctx.message) return
+				// @ts-ignore
 				const text =
 					ctx.message.text?.split(" ").slice(1).join(" ") || ""
 				if (validate(parseFloat(text))) {
+					// @ts-ignore
 					ctx.session[key] = parseFloat(text)
 				}
+				// @ts-ignore
 				ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
@@ -67,8 +77,10 @@ export class BotHandlers {
 				const text =
 					ctx.message.text?.split(" ").slice(1).join(" ").trim() || ""
 				if (text) {
+					// @ts-ignore
 					ctx.session[key] = text
 				}
+				// @ts-ignore
 				ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
@@ -86,12 +98,28 @@ export class BotHandlers {
 						this.commands
 							.map(
 								command =>
-									`*${command.command}*\n${command.description}\n`
+									`/${command.command} — ${command.description}\n`
 							)
-							.join("")
+							.join(""),
+					{
+						parse_mode: "HTML",
+					}
 				)
 			},
 			"показать список команд"
+		)
+	}
+
+	initPersonaHandler() {
+		this.command(
+			["mood", "pers", "persona"],
+			async ctx => {
+				await ctx.reply(await getPersonasList(), {
+					reply_markup: personasMenu,
+					parse_mode: "Markdown",
+				})
+			},
+			`<b>преключение персонажа который будет общаться с вами</b>`
 		)
 	}
 
@@ -123,5 +151,10 @@ export class BotHandlers {
 
 	async registerHandlers() {
 		this.initConfigurationHandlers()
+		this.initHelpHandler()
+		this.initPersonaHandler()
+
+		const chatCompletion = new ChatCompletion(this.bot)
+		chatCompletion.init()
 	}
 }
