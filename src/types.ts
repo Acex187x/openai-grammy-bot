@@ -24,10 +24,14 @@ export type BotContext = Context &
 	HydrateFlavor<Context> &
 	SessionFlavor<SessionData>
 
-
 export interface Persona {
 	id: string
 	name: string
 	description: string
 	prompt: string
+}
+
+export interface BotCommand {
+	command: string
+	description: string
 }

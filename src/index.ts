@@ -17,15 +17,15 @@ import * as dotenv from "dotenv"
 import { freeStorage } from "@grammyjs/storage-free"
 import { Message } from "grammy/out/types.node"
 import { BotContext, SessionData } from "./types"
-import { TgHistorySave } from "./modules/TgHistorySave"
-import { checkIfMessageAddressedToBot } from "./modules/Utils"
-import { BasicPrompt } from "./modules/Const"
+import { HistorySave } from "./bot/HistorySave"
+import { checkIfMessageAddressedToBot } from "./utils"
+import { BasicPrompt } from "./constants"
 import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb"
 import { MongoClient } from "mongodb"
 import { db } from "./db"
 import { getPersonasList, personasMenu } from "./modules/PersonaSwitcher"
 import express from "express"
-import { BotHandlers } from "./modules/BotHandlers"
+import { BotHandlers } from "./bot/BotHandlers"
 
 dotenv.config()
 
@@ -101,7 +101,7 @@ bot.command(["mood", "pers", "persona"], async ctx => {
 bot.on("message", async ctx => {
 	if (!(ctx.message.text || ctx.message.caption)) return
 
-	const tgSaveUtil = new TgHistorySave(ctx)
+	const tgSaveUtil = new HistorySave(ctx)
 	tgSaveUtil.saveMessage()
 
 	const isMessageForBot = checkIfMessageAddressedToBot(ctx.message, ctx)
