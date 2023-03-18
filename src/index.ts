@@ -17,15 +17,15 @@ import * as dotenv from "dotenv"
 import { freeStorage } from "@grammyjs/storage-free"
 import { Message } from "grammy/out/types.node"
 import { BotContext, SessionData } from "./types"
-import { TgHistorySave } from "./modules/TgHistorySave"
-import { checkIfMessageAddressedToBot } from "./modules/Utils"
-import { BasicPrompt } from "./modules/Const"
+import { HistorySave } from "./bot/HistorySave"
+import { checkIfMessageAddressedToBot } from "./utils"
+import { BasicPrompt } from "./constants"
 import { MongoDBAdapter, ISession } from "@grammyjs/storage-mongodb"
 import { MongoClient } from "mongodb"
 import { db } from "./db"
 import { getPersonasList, personasMenu } from "./modules/PersonaSwitcher"
 import express from "express"
-import { BotHandlers } from "./modules/BotHandlers"
+import { BotHandlers } from "./bot/BotHandlers"
 
 dotenv.config()
 
@@ -138,7 +138,7 @@ bot.on("message", async ctx => {
 		const completion = await openai.createChatCompletion(<
 			CreateChatCompletionRequest
 		>{
-			model: process.env.MODEL || "gpt-3.5-turbo",
+			model: "gpt-3.5-turbo",
 			temperature: ctx.session.temperature,
 			max_tokens: ctx.session.maxTokens,
 			messages: [
@@ -149,8 +149,6 @@ bot.on("message", async ctx => {
 				},
 				...history,
 			],
-		}, {
-			timeout: 60 * 2 * 1000,
 		})
 
 		if (!completion.data.choices[0] || !completion.data.choices[0].message)
@@ -176,12 +174,15 @@ bot.catch = err => {
 }
 
 if (process.env.DOMAIN && process.env.PORT) {
-	const domain = String(process.env.DOMAIN);
-	const secretPath = String(process.env.BOT_TOKEN);
-	const app = express();
+	const domain = String(process.env.DOMAIN)
+	const secretPath = String(process.env.BOT_TOKEN)
+	const app = express()
 
-	app.use(express.json());
-	app.use(`/${secretPath}`, webhookCallback(bot, "express", "return", 60 * 3 * 1000));
+	app.use(express.json())
+	app.use(
+		`/${secretPath}`,
+		webhookCallback(bot, "express", "return", 60 * 3 * 1000)
+	)
 
 	app.listen(Number(process.env.PORT), async () => {
 		console.log(`Bot now listening on port ${process.env.PORT}!`)

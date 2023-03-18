@@ -1,5 +1,6 @@
 import { Api, Context, SessionFlavor } from "grammy"
 import { HydrateApiFlavor, HydrateFlavor } from "@grammyjs/hydrate"
+import { MaybeArray } from "grammy/out/context"
 
 export interface MessageStored {
 	text: string
@@ -24,10 +25,14 @@ export type BotContext = Context &
 	HydrateFlavor<Context> &
 	SessionFlavor<SessionData>
 
-
 export interface Persona {
 	id: string
 	name: string
 	description: string
 	prompt: string
+}
+
+export interface BotCommand {
+	command: string
+	description: string
 }
