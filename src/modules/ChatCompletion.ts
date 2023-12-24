@@ -33,7 +33,7 @@ export class ChatCompletion {
 			history = tgSaveUtil.getReplyTree()
 		} else {
 			if (ctx.session.rememberContext) {
-				history = tgSaveUtil.getHistory(1000)
+				history = tgSaveUtil.getHistory(process.env.HISTORY_LIMIT_TOKEN || 300)
 			} else {
 				history = tgSaveUtil.convertMessageToOpenAIChat(message)
 			}
@@ -56,7 +56,7 @@ export class ChatCompletion {
 			const completion = await openai.createChatCompletion(<
 				CreateChatCompletionRequest
 			>{
-				model: "gpt-3.5-turbo",
+				model: process.env.MODEL || 'gpt-3.5-turbo',
 				temperature: ctx.session.temperature,
 				max_tokens: ctx.session.maxTokens,
 				messages: [
