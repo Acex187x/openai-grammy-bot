@@ -33,7 +33,7 @@ export class ChatCompletion {
 			history = tgSaveUtil.getReplyTree()
 		} else {
 			if (ctx.session.rememberContext) {
-				history = tgSaveUtil.getHistory(process.env.HISTORY_LIMIT_TOKEN || 300)
+				history = tgSaveUtil.getHistory(parseInt(process.env.HISTORY_LIMIT_TOKEN) || 300)
 			} else {
 				history = tgSaveUtil.convertMessageToOpenAIChat(message)
 			}
