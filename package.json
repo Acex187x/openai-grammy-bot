@@ -21,8 +21,6 @@
     "franc": "^6.1.0",
     "gpt-3-encoder": "^1.1.4",
     "grammy": "^1.13.1",
-    "langdetect": "^0.2.1",
-    "languagedetect": "^2.0.0",
     "mongodb": "^5.1.0",
     "openai": "^3.2.1",
     "prettier": "^2.8.3"
