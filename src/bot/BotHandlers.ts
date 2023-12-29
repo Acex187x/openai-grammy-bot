@@ -35,7 +35,6 @@ export class BotHandlers {
 				if (!ctx.message) return
 				// @ts-ignore
 				ctx.session[key] = !ctx.session[key]
-				// @ts-ignore
 				await ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
@@ -59,7 +58,6 @@ export class BotHandlers {
 					// @ts-ignore
 					ctx.session[key] = parseFloat(text)
 				}
-				// @ts-ignore
 				await ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
@@ -73,7 +71,7 @@ export class BotHandlers {
 	) {
 		this.command(
 			command,
-			ctx => {
+			async ctx => {
 				if (!ctx.message) return
 				const text =
 					ctx.message.text?.split(" ").slice(1).join(" ").trim() || ""
@@ -81,7 +79,6 @@ export class BotHandlers {
 					// @ts-ignore
 					ctx.session[key] = text
 				}
-				// @ts-ignore
 				await ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
