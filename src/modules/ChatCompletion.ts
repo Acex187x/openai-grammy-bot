@@ -2,7 +2,7 @@ import { Bot } from "grammy"
 import { Message } from "grammy/out/types.node"
 import { Configuration, CreateChatCompletionRequest, OpenAIApi } from "openai"
 import { HistorySave } from "../bot/HistorySave"
-import { BasicPrompt } from "../constants"
+import { BasicPrompt, SinglePrompt } from "../constants"
 import { openai } from "../openai"
 import { BotContext } from "../types"
 import { checkIfMessageAddressedToBot } from "../utils"
@@ -44,10 +44,13 @@ export class ChatCompletion {
 			await ctx.replyWithChatAction("typing")
 		}, 2000)
 
+		const promptStart = SinglePrompt || ctx.session.promptStart
+		const systemMessage = (promptStart || "") + `. ${BasicPrompt}`
+
 		console.log([
 			{
 				role: "system",
-				content: (ctx.session.promptStart || "") + `. ${BasicPrompt}`,
+				content: systemMessage,
 			},
 			...history,
 		])
@@ -62,9 +65,7 @@ export class ChatCompletion {
 				messages: [
 					{
 						role: "system",
-						content:
-							(ctx.session.promptStart || "") +
-							`. ${BasicPrompt}`,
+						content: systemMessage,
 					},
 					...history,
 				],

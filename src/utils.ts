@@ -1,5 +1,6 @@
 import { Message } from "grammy/out/types.node"
 import { BotContext } from "./types"
+import { CallSigns } from "./constants"
 
 export function checkIfMessageAddressedToBot(
 	message: Message,
@@ -10,10 +11,10 @@ export function checkIfMessageAddressedToBot(
 	const text = message.text || message.caption || ""
 	if (!text) return false
 	if (message.chat.type === "private") return true
-	if (text.toLowerCase().startsWith("разум")) return true
-	if (text.toLowerCase().startsWith("mind")) return true
-	if (text.toLowerCase().startsWith("the mind")) return true
-	if (message.reply_to_message?.from?.id === ctx.me.id) return true
+	if (CallSigns.reduce((acc, sign) => acc || text.startsWith(sign), false)) return true
 
-	return false
+	// 0.1% chance of responding to a message not addressed to the bot
+	if (Math.random() < 0.001) return true
+
+	return message.reply_to_message?.from?.id === ctx.me.id;
 }

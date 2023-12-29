@@ -3,6 +3,7 @@ import { MaybeArray } from "grammy/out/context"
 import { ChatCompletion } from "../modules/ChatCompletion"
 import { getPersonasList, personasMenu } from "../modules/PersonaSwitcher"
 import { BotCommand, BotContext, SessionData } from "../types"
+import { BotName, IsSinglePrompt } from "../constants"
 
 export class BotHandlers {
 	bot: Bot<BotContext>
@@ -23,25 +24,25 @@ export class BotHandlers {
 		})
 	}
 
-	async initBooleanConfigHandler(
+	initBooleanConfigHandler(
 		command: MaybeArray<string>,
 		key: string,
 		description?: string
 	) {
 		this.command(
 			command,
-			ctx => {
+			async ctx => {
 				if (!ctx.message) return
 				// @ts-ignore
 				ctx.session[key] = !ctx.session[key]
 				// @ts-ignore
-				ctx.reply(`${key}: ${ctx.session[key]}`)
+				await ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
 		)
 	}
 
-	async initNumberConfigHandler(
+	initNumberConfigHandler(
 		command: MaybeArray<string>,
 		key: string,
 		validate: (value: number) => boolean,
@@ -49,7 +50,7 @@ export class BotHandlers {
 	) {
 		this.command(
 			command,
-			ctx => {
+			async ctx => {
 				if (!ctx.message) return
 				// @ts-ignore
 				const text =
@@ -59,13 +60,13 @@ export class BotHandlers {
 					ctx.session[key] = parseFloat(text)
 				}
 				// @ts-ignore
-				ctx.reply(`${key}: ${ctx.session[key]}`)
+				await ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
 		)
 	}
 
-	async initStringConfigHandler(
+	initStringConfigHandler(
 		command: MaybeArray<string>,
 		key: string,
 		description?: string
@@ -81,26 +82,27 @@ export class BotHandlers {
 					ctx.session[key] = text
 				}
 				// @ts-ignore
-				ctx.reply(`${key}: ${ctx.session[key]}`)
+				await ctx.reply(`${key}: ${ctx.session[key]}`)
 			},
 			description
 		)
 	}
 
-	async initHelpHandler() {
+	initHelpHandler() {
 		this.command(
 			["help", "start"],
-			ctx => {
-				ctx.reply(
-					`Добро пожаловать в Разум! Я могу ответь на любой твой вопрос, просто начини общаться со мной\n` +
+			async ctx => {
+				await ctx.reply(
+					`Добро пожаловать в ${BotName}! Я могу ответь на любой твой вопрос, просто начини общаться со мной\n` +
 						`Также меня можно добавить в группу и я буду поддерживать беседу.\n\n` +
+					(this.commands.length > 1 ? (
 						`Список доступных команд:\n` +
 						this.commands
 							.map(
 								command =>
 									`/${command.command} — ${command.description}\n`
 							)
-							.join(""),
+							.join("")) : ""),
 					{
 						parse_mode: "HTML",
 					}
@@ -123,7 +125,7 @@ export class BotHandlers {
 		)
 	}
 
-	async initConfigurationHandlers() {
+	initConfigurationHandlers() {
 		this.initStringConfigHandler(
 			["prompt_start", "ps"],
 			"promptStart",
@@ -150,9 +152,12 @@ export class BotHandlers {
 	}
 
 	async registerHandlers() {
-		this.initConfigurationHandlers()
+
+		if (!IsSinglePrompt) {
+			this.initConfigurationHandlers()
+			this.initPersonaHandler()
+		}
 		this.initHelpHandler()
-		this.initPersonaHandler()
 
 		const chatCompletion = new ChatCompletion(this.bot)
 		chatCompletion.init()
