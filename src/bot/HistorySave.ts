@@ -100,6 +100,7 @@ export class HistorySave {
 
 		// Remove messages from start until tokens are less than tokenLimit
 		while (tokens > tokenLimit) {
+			console.log({ tokens })
 			history.shift()
 			tokens = this.tokenizeMessageStored(history)
 		}
