@@ -1,6 +1,6 @@
 import { BotContext, MessageStored } from "../types"
 import { Message } from "grammy/out/types.node"
-import { encode, decode } from "gpt-3-encoder"
+import { encode, isWithinTokenLimit } from "gpt-tokenizer"
 import {
 	ChatCompletionRequestMessage,
 	ChatCompletionRequestMessageRoleEnum,
@@ -99,8 +99,7 @@ export class HistorySave {
 		let tokens = this.tokenizeMessageStored(history)
 
 		// Remove messages from start until tokens are less than tokenLimit
-		while (tokens > tokenLimit) {
-			console.log({ tokens })
+		while (tokens > tokenLimit && history.length > 1) {
 			history.shift()
 			tokens = this.tokenizeMessageStored(history)
 		}
