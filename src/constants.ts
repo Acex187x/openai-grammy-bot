@@ -3,5 +3,3 @@ export const SinglePrompt = process.env.SINGLE_PROMPT
 export const IsSinglePrompt = process.env.SINGLE_PROMPT !== undefined
 export const CallSigns = process.env.CALLSIGN?.split(",") || ['разум','mind']
 export const BotName = process.env.BOT_NAME || "Разум"
-
-AI should respond only with text message
