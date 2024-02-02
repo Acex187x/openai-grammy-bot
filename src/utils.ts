@@ -13,6 +13,9 @@ export function checkIfMessageAddressedToBot(
 	if (message.chat.type === "private") return true
 	if (CallSigns.reduce((acc, sign) => acc || text.toLowerCase().startsWith(sign), false)) return true
 
+	// Channel forwards in "Comment chat" of channel
+	if (message.from.id === 777000 && message.forward_from_chat.type === 'channel') return true
+
 	// 0.5% chance of responding to a message not addressed to the bot
 	if (Math.random() < 0.005) return true
 
