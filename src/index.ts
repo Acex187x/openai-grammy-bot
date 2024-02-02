@@ -108,8 +108,12 @@ if (process.env.DOMAIN && process.env.PORT) {
 
 	app.listen(Number(process.env.PORT), async () => {
 		console.log(`Bot now listening on port ${process.env.PORT}!`)
-		await bot.api.setWebhook(`https://${domain}/${secretPath}`)
+		await bot.api.setWebhook(`https://${domain}/${secretPath}`, {
+			drop_pending_updates: true
+		})
 	})
 } else {
-	bot.start()
+	bot.start({
+		drop_pending_updates: true
+	})
 }
