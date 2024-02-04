@@ -30,7 +30,7 @@ export function checkReplyType(ctx: BotContext): (keyof typeof ServicePrompts) |
 	}
 
 	// 0.5% chance of responding to a message not addressed to the bot
-	if (Math.random() < 0.8) return 'group-random-reply'
+	if (Math.random() < 0.05) return 'group-random-reply'
 
 	return null
 }
