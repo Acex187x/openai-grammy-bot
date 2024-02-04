@@ -23,6 +23,14 @@ export class HistorySave {
 		).length
 	}
 
+	public tokenizeHistory(message: ChatCompletionRequestMessage[]) {
+		return encode(
+			(Array.isArray(message) ? message : [message])
+				.map(m => m.content)
+				.join("")
+		).length
+	}
+
 	public saveMessage(message: Message = this.ctx.message as Message) {
 		// While storage has more than 15000 bytes, remove the oldest one
 		while (JSON.stringify(this.ctx.session.messages).length > 15000) {
@@ -34,8 +42,6 @@ export class HistorySave {
 		if (!messageStored) return
 
 		this.ctx.session.messages.push(messageStored)
-
-		console.log(JSON.stringify(this.ctx.session).length)
 	}
 
 	public async saveMessageEdited(
@@ -93,7 +99,7 @@ export class HistorySave {
 
 	// Method to get the latest message history with a limit of tokenLimit
 
-	public getHistory(tokenLimit = 3500) {
+	public getHistory(tokenLimit = 3500, addIds: boolean = false) {
 		let history = JSON.parse(JSON.stringify(this.ctx.session.messages))
 
 		let tokens = this.tokenizeMessageStored(history)
@@ -104,7 +110,7 @@ export class HistorySave {
 			tokens = this.tokenizeMessageStored(history)
 		}
 
-		return this.convertMessageStoredToOpenAIChat(history)
+		return this.convertMessageStoredToOpenAIChat(history, addIds)
 	}
 
 	public convertTgMessageToMessageStored(message: Message): MessageStored {
@@ -127,39 +133,35 @@ export class HistorySave {
 	}
 
 	public convertMessageStoredToOpenAIChat(
-		messageStored: MessageStored[] | MessageStored
+		messageStored: MessageStored[] | MessageStored,
+		addIds: boolean = false,
 	): ChatCompletionRequestMessage[] {
 		const messages = Array.isArray(messageStored)
 			? messageStored
 			: [messageStored]
 
-		return messages.map(message => ({
+		return messages.map((message, i) => ({
 			role: message.is_ai
 				? ChatCompletionRequestMessageRoleEnum.Assistant
 				: ChatCompletionRequestMessageRoleEnum.User,
 			content: message.is_ai
 				? message.text
-				: `[${message.name}] ${message.text}`,
+				: `${addIds ? `${message.id}: ` : ''}[${message.name}] ${message.text}`,
 		}))
 	}
 
 	public convertMessageToOpenAIChat(
-		messageStored: Message[] | Message
+		messageStored: Message[] | Message,
+		addIds: boolean = false,
 	): ChatCompletionRequestMessage[] {
 		let messages = Array.isArray(messageStored)
 			? messageStored
 			: [messageStored]
+
 		const messagesStored = messages
 			.map(el => this.convertTgMessageToMessageStored(el))
 			.filter(el => el)
 
-		return messagesStored.map(message => ({
-			role: message.is_ai
-				? ChatCompletionRequestMessageRoleEnum.Assistant
-				: ChatCompletionRequestMessageRoleEnum.User,
-			content: message.is_ai
-				? message.text
-				: `[${message.name}] ${message.text}`,
-		}))
+		return this.convertMessageStoredToOpenAIChat(messagesStored, addIds)
 	}
 }

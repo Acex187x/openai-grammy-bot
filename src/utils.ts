@@ -1,23 +1,36 @@
 import { Message } from "grammy/out/types.node"
 import { BotContext } from "./types"
-import { CallSigns } from "./constants"
+import { CallSigns, ServicePrompts } from "./constants"
 
-export function checkIfMessageAddressedToBot(
-	message: Message,
-	ctx: BotContext
-): boolean {
-	if (!message) return false
+export function checkReplyType(ctx: BotContext): (keyof typeof ServicePrompts) | null {
+	const message = ctx.message as Message
+	if (!message) return null
 
 	const text = message.text || message.caption || ""
-	if (!text) return false
-	if (message.chat.type === "private") return true
-	if (CallSigns.reduce((acc, sign) => acc || text.toLowerCase().startsWith(sign), false)) return true
+	if (!text) return null
+
+	if (message.chat.type === "private") return 'private-chat'
+	if (
+		CallSigns.reduce(
+			(acc, sign) => acc || text.toLowerCase().startsWith(sign),
+			false
+		)
+	)
+		return 'group-callsign-reply'
 
 	// Channel forwards in "Comment chat" of channel
-	if (message.from.id === 777000 && message.forward_from_chat.type === 'channel') return true
+	if (
+		message.from.id === 777000 &&
+		message.forward_from_chat.type === "channel"
+	)
+		return 'channel-post-comment'
+
+	if (message.reply_to_message?.from?.id === ctx.me.id) {
+		return 'group-reply-tree'
+	}
 
 	// 0.5% chance of responding to a message not addressed to the bot
-	if (Math.random() < 0.005) return true
+	if (Math.random() < 0.8) return 'group-random-reply'
 
-	return message.reply_to_message?.from?.id === ctx.me.id;
+	return null
 }
