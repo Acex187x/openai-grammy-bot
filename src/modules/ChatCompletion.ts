@@ -77,7 +77,7 @@ export class ChatCompletion {
 	}
 
 	private createGroupCallsignReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
-		return this.createDefaultHistory(ctx, tgSaveUtil, false)
+		return this.createDefaultHistory(ctx, tgSaveUtil, true)
 	}
 
 	private createGroupRandomReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
@@ -89,7 +89,7 @@ export class ChatCompletion {
 	}
 
 	private createPrivateChatHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
-		return this.createDefaultHistory(ctx, tgSaveUtil, false)
+		return this.createDefaultHistory(ctx, tgSaveUtil, true)
 	}
 
 	private createHistory(ctx: BotContext, tgSaveUtil: HistorySave, replyType: keyof typeof ServicePrompts): ChatCompletionRequestMessage[] {
@@ -164,26 +164,21 @@ export class ChatCompletion {
 		}
 
 		if (typeof completion === 'string' && completion.length > 0) {
-			let replyMessage: Message | Message.TextMessage;
-			if (replyType === "group-random-reply") {
-				const match = completion.match(/【(\d+)】/)
-				if (match) {
-					const id = parseInt(match[1])
-					replyMessage = await ctx.reply(completion.replace(match[0], ''), {
-						parse_mode: "Markdown",
-						reply_to_message_id: id
-					})
-				} else {
-					replyMessage = await ctx.reply(completion, {
-						parse_mode: "Markdown",
-					})
-				}
-			} else  {
-				replyMessage = await ctx.reply(completion, {
-					parse_mode: "Markdown",
-					reply_to_message_id: message.message_id,
-				})
+			let messageBuffer = completion
+			let replyId = 0;
+			const matchId = completion.match(/(\d+):/)
+			if (matchId) {
+				replyId = parseInt(matchId[1])
+				messageBuffer = completion.replace(matchId[0], '')
 			}
+			const matchStupidBot = messageBuffer.match(/\[.+\]/) // Sometimes bot includes also user name in square brackets , we need to fix it
+			if (matchStupidBot) {
+				messageBuffer = messageBuffer.replace(matchStupidBot[0], '')
+			}
+			const replyMessage = await ctx.reply(messageBuffer, {
+				parse_mode: "Markdown",
+				reply_to_message_id: replyId
+			})
 			tgSaveUtil.saveMessage(replyMessage)
 		}
 
