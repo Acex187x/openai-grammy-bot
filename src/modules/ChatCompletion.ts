@@ -168,7 +168,7 @@ export class ChatCompletion {
 			let replyId = 0;
 			const matchId = completion.match(/(\d+):/)
 			if (replyType === 'group-callsign-reply' || replyType === 'group-reply-tree') {
-				replyId = ctx.message.id
+				replyId = message.message_id
 			}
 			if (matchId) {
 				replyId = parseInt(matchId[1])
