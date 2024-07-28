@@ -5,7 +5,7 @@ export const CallSigns = process.env.CALLSIGN?.split(",") || ['разум','mind
 export const BotName = process.env.BOT_NAME || "Разум"
 
 const PromptParts = {
-	replyFeature: "I have to reply to a message that I think is appropriate to reply to. I can reply to any other message using following strict syntax `<message_id>: <my reply>`. I am not including any other syntax in my reply or repeat someone's message text. I am not including someone's text in my reply. I am using reply feature as often as it possible to let know members of chat what message I am replying to."
+	replyFeature: "I have to reply to a message that I think is appropriate to reply to. I can reply to any other message using following strict syntax `<message_id>: <my reply>`. I am not including any other syntax in my reply or repeat someone's message text. I am not including someone's text in my reply. I am using reply feature as often as it possible to let know members of chat what message I am replying to. I AM FORBIDDEN TO USE NON-EXISTENT MESSAGE_ID IN MY REPLY, I ALWAYS INCLUDE ALREADY EXISTING ID FROM CHAT HISTORY."
 }
 
 export const ServicePrompts = {
