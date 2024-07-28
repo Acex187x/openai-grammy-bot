@@ -180,7 +180,8 @@ export class ChatCompletion {
 			}
 			const replyMessage = await ctx.reply(messageBuffer, {
 				parse_mode: "Markdown",
-				reply_to_message_id: replyId
+				reply_to_message_id: replyId,
+				allow_sending_without_reply: true
 			})
 			tgSaveUtil.saveMessage(replyMessage)
 		}
