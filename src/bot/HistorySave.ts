@@ -41,6 +41,10 @@ export class HistorySave {
 
 		if (!messageStored) return
 
+		// Check if message with same ID already exists
+		const exists = this.ctx.session.messages.some(m => m.id === messageStored.id)
+		if (exists) return
+
 		this.ctx.session.messages.push(messageStored)
 	}
 
