@@ -29,7 +29,7 @@ export class ChatCompletion {
 				CreateChatCompletionRequest
 				>{
 				model: process.env.MODEL || 'gpt-3.5-turbo',
-				temperature: process.env.SINGLE_PROMPT ? (process.env.TEMPERATURE || 0.5) : ctx.session.temperature,
+				temperature: process.env.SINGLE_PROMPT ? parseFloat(process.env.TEMPERATURE || "0.5") : ctx.session.temperature,
 				max_tokens: ctx.session.maxTokens,
 				messages: history,
 			})
