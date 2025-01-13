@@ -94,7 +94,7 @@ export class HistorySave {
 			tokens = this.tokenizeMessageStored(res)
 		}
 
-		return this.convertMessageStoredToOpenAIChat(res)
+		return this.convertMessageStoredToOpenAIChat(res, true)
 	}
 
 	// Method to get the latest message history with a limit of tokenLimit
