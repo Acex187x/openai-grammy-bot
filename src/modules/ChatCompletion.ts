@@ -84,7 +84,7 @@ export class ChatCompletion {
 					} : null,
 					{
 						type: "image_url",
-						image_url: photoUrl
+						image_url: {url: photoUrl}
 					}
 				].filter(el => !!el)
 			}
