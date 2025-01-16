@@ -111,7 +111,7 @@ export class ChatCompletion {
 	private createSystemMessage(ctx: BotContext, replyType: keyof typeof ServicePrompts) {
 		const message = ctx.message as Message
 		if (replyType === null) return ""
-		const systemPrompt = ServicePrompts[replyType]
+		const systemPrompt = ServicePrompts[replyType] + ' ' + ServicePrompts["short-reply-note"]
 		const inserts = {
 			channel_name: message?.forward_from_chat?.type === "channel" ? message?.forward_from_chat?.title : "",
 			group_name: message?.chat?.type === "group" || message?.chat?.type === "supergroup" ? message?.chat?.title : "",
