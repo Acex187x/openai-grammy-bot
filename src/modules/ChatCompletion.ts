@@ -67,13 +67,25 @@ export class ChatCompletion {
 		}
 	}
 
-	private createChannelPostCommentHistory(ctx: BotContext) {
+	private async createChannelPostCommentHistory(ctx: BotContext) {
 		const message = ctx.message as Message
-		console.log(message.photo)
+		const photoSelected = message.photo.filter(el => el.file_size < 500000).sort((a, b) => b.file_size - a.file_size)[0]
+		const photoFetched = await ctx.api.getFile(photoSelected.file_id)
+		const photoUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${photoFetched.file_path}`
+
 		return [
 			{
 				role: ChatCompletionRequestMessageRoleEnum.User,
-				content: message.text || message.caption || ""
+				content: [
+					message.text || message.caption ? {
+						type: "text",
+						text: message.text || message.caption || ""
+					} : null,
+					{
+						type: "image_url",
+						image_url: photoUrl
+					}
+				].filter(el => !!el)
 			}
 		]
 	}
