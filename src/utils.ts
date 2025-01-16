@@ -1,6 +1,7 @@
 import { Message } from "grammy/out/types.node"
 import { BotContext } from "./types"
 import { CallSigns, ServicePrompts } from "./constants"
+import axios from "axios"
 
 export function checkReplyType(ctx: BotContext): (keyof typeof ServicePrompts) | null {
 	const message = ctx.message as Message
@@ -33,4 +34,24 @@ export function checkReplyType(ctx: BotContext): (keyof typeof ServicePrompts) |
 	if (Math.random() < (parseInt(process.env.RANDOM_REPLY_CHANCE) || 0.03)) return 'group-random-reply'
 
 	return null
+}
+
+export async function getImageAsBase64(imageUrl: string) {
+  try {
+    // Download the image using axios
+    const response = await axios({
+      method: 'GET',
+      url: imageUrl,
+      responseType: 'arraybuffer'
+    });
+
+    // Convert the image buffer to base64
+    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    
+    // Return in the specific format: data:image/jpeg;base64,{base64_image}
+    return `data:image/jpeg;base64,${base64Image}`;
+  } catch (error) {
+    console.error('Error downloading or converting image:', error);
+    throw error;
+  }
 }

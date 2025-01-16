@@ -11,7 +11,7 @@ import { HistorySave } from "../bot/HistorySave"
 import { BasicPrompt, ServicePrompts, SinglePrompt } from "../constants"
 import { openai } from "../openai"
 import { BotContext } from "../types"
-import { checkReplyType } from "../utils"
+import { checkReplyType, getImageAsBase64 } from "../utils"
 import { encode } from "gpt-tokenizer"
 
 export class ChatCompletion {
@@ -72,6 +72,7 @@ export class ChatCompletion {
 		const photoSelected = message.photo.filter(el => el.file_size < 500000).sort((a, b) => b.file_size - a.file_size)[0]
 		const photoFetched = await ctx.api.getFile(photoSelected.file_id)
 		const photoUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${photoFetched.file_path}`
+		const photoBase64 = await getImageAsBase64(photoUrl)
 
 		// @ts-ignore TODO: update openai types
 		return [
@@ -84,7 +85,7 @@ export class ChatCompletion {
 					} : null,
 					{
 						type: "image_url",
-						image_url: {url: photoUrl}
+						image_url: {url: photoBase64}
 					}
 				].filter(el => !!el)
 			}

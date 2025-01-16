@@ -5,6 +5,7 @@ import {
 	ChatCompletionRequestMessage,
 	ChatCompletionRequestMessageRoleEnum,
 } from "openai"
+import { getImageAsBase64 } from "../utils"
 
 export class HistorySave {
 	private ctx: BotContext
@@ -162,6 +163,7 @@ export class HistorySave {
 				const photoSelected = message.photo.filter(el => el.file_size < 500000).sort((a, b) => b.file_size - a.file_size)[0]
 				const photoFetched = await this.ctx.api.getFile(photoSelected.file_id)
 				const photoUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${photoFetched.file_path}`
+				const photoBase64 = await getImageAsBase64(photoUrl)
 
 				const content = [
 					message.text ? {
@@ -170,12 +172,12 @@ export class HistorySave {
 					} : null,
 					{
 						type: "image_url",
-						image_url: {url: photoUrl},
+						image_url: {url: photoBase64},
 					},
 				].filter(el => !!el)
 
 				console.log({photoUrl, content, photoFetched, photoSelected})
-				
+
 				return {
 					role: message.is_ai
 						? ChatCompletionRequestMessageRoleEnum.Assistant
