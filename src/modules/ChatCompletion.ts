@@ -73,6 +73,7 @@ export class ChatCompletion {
 		const photoFetched = await ctx.api.getFile(photoSelected.file_id)
 		const photoUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${photoFetched.file_path}`
 
+		// @ts-ignore TODO: update openai types
 		return [
 			{
 				role: ChatCompletionRequestMessageRoleEnum.User,
@@ -87,7 +88,7 @@ export class ChatCompletion {
 					}
 				].filter(el => !!el)
 			}
-		]
+		] as ChatCompletionRequestMessage[]
 	}
 
 	private async createGroupCallsignReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
