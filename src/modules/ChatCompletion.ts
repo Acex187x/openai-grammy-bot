@@ -51,6 +51,7 @@ export class ChatCompletion {
 
 			return content
 		} catch (err) {
+			console.log(err.response.data)
 			console.error(err)
 			return ""
 		}
@@ -68,6 +69,7 @@ export class ChatCompletion {
 
 	private createChannelPostCommentHistory(ctx: BotContext) {
 		const message = ctx.message as Message
+		console.log(message.photo)
 		return [
 			{
 				role: ChatCompletionRequestMessageRoleEnum.User,
@@ -76,34 +78,35 @@ export class ChatCompletion {
 		]
 	}
 
-	private createGroupCallsignReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
-		return this.createDefaultHistory(ctx, tgSaveUtil, true)
+	private async createGroupCallsignReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
+		return await this.createDefaultHistory(ctx, tgSaveUtil, true)
 	}
 
-	private createGroupRandomReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
-		return this.createDefaultHistory(ctx, tgSaveUtil, true)
+	private async createGroupRandomReplyHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
+		return await this.createDefaultHistory(ctx, tgSaveUtil, true)
 	}
 
-	private createGroupReplyTreeHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
-		return tgSaveUtil.getReplyTree(parseInt(process.env.HISTORY_LIMIT_TOKEN) || 300)
+	private async createGroupReplyTreeHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
+		return await tgSaveUtil.getReplyTree(parseInt(process.env.HISTORY_LIMIT_TOKEN) || 300)
 	}
 
-	private createPrivateChatHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
-		return this.createDefaultHistory(ctx, tgSaveUtil, true)
+	private async createPrivateChatHistory(ctx: BotContext, tgSaveUtil: HistorySave) {
+		console.log(ctx.message.photo)
+		return await this.createDefaultHistory(ctx, tgSaveUtil, true)
 	}
 
-	private createHistory(ctx: BotContext, tgSaveUtil: HistorySave, replyType: keyof typeof ServicePrompts): ChatCompletionRequestMessage[] {
+	private async createHistory(ctx: BotContext, tgSaveUtil: HistorySave, replyType: keyof typeof ServicePrompts): Promise<ChatCompletionRequestMessage[]> {
 		switch (replyType) {
 			case "channel-post-comment":
-				return this.createChannelPostCommentHistory(ctx)
+				return await this.createChannelPostCommentHistory(ctx)
 			case "group-callsign-reply":
-				return this.createGroupCallsignReplyHistory(ctx, tgSaveUtil)
+				return await this.createGroupCallsignReplyHistory(ctx, tgSaveUtil)
 			case "group-random-reply":
-				return this.createGroupRandomReplyHistory(ctx, tgSaveUtil)
+				return await this.createGroupRandomReplyHistory(ctx, tgSaveUtil)
 			case "group-reply-tree":
-				return this.createGroupReplyTreeHistory(ctx, tgSaveUtil)
+				return await this.createGroupReplyTreeHistory(ctx, tgSaveUtil)
 			case "private-chat":
-				return this.createPrivateChatHistory(ctx, tgSaveUtil)
+				return await this.createPrivateChatHistory(ctx, tgSaveUtil)
 		}
 
 	}
@@ -125,7 +128,7 @@ export class ChatCompletion {
 	}
 
 	private async middleware(ctx: BotContext) {
-		if (!ctx.message || !(ctx.message.text || ctx.message.caption)) return
+		if (!ctx.message || !(ctx.message.text || ctx.message.caption || ctx.message.photo)) return
 
 		const message = ctx.message as Message
 
@@ -133,12 +136,12 @@ export class ChatCompletion {
 		tgSaveUtil.saveMessage()
 
 		const replyType = checkReplyType(ctx)
-
+		console.log(replyType)
 		if (!replyType) {
 			return
 		}
 
-		let history = this.createHistory(ctx, tgSaveUtil, replyType);
+		let history = await this.createHistory(ctx, tgSaveUtil, replyType);
 		console.log({ history, replyType })
 		await ctx.replyWithChatAction("typing")
 		const typingInterval = setInterval(async () => {

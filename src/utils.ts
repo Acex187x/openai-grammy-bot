@@ -7,7 +7,7 @@ export function checkReplyType(ctx: BotContext): (keyof typeof ServicePrompts) |
 	if (!message) return null
 
 	const text = message.text || message.caption || ""
-	if (!text) return null
+	if (!(text || message.photo)) return null
 
 	if (message.chat.type === "private") return 'private-chat'
 	if (

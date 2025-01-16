@@ -1,6 +1,7 @@
 import { Api, Context, SessionFlavor } from "grammy"
 import { HydrateApiFlavor, HydrateFlavor } from "@grammyjs/hydrate"
 import { MaybeArray } from "grammy/out/context"
+import { PhotoSize } from "grammy/out/types.node"
 
 export interface MessageStored {
 	text: string
@@ -8,6 +9,7 @@ export interface MessageStored {
 	name: string
 	reply_to_id?: number
 	is_ai: boolean
+	photo?: PhotoSize[]
 }
 
 export interface SessionData {

@@ -124,11 +124,13 @@ export class HistorySave {
 			message.from?.first_name || message.from?.username || "Anon"
 		const id = message.message_id
 		const reply_to_id = message.reply_to_message?.message_id || 0
+		const photo = message.photo
 
 		const messageStored: MessageStored = {
 			text,
 			id,
 			name,
+			photo,
 			...(reply_to_id ? { reply_to_id } : {}),
 			is_ai: message.from?.is_bot || false,
 		}
@@ -139,25 +141,51 @@ export class HistorySave {
 	public convertMessageStoredToOpenAIChat(
 		messageStored: MessageStored[] | MessageStored,
 		addIds: boolean = false,
-	): ChatCompletionRequestMessage[] {
+	): Promise<ChatCompletionRequestMessage[]> {
 		const messages = Array.isArray(messageStored)
 			? messageStored
 			: [messageStored]
 
-		return messages.map((message, i) => ({
-			role: message.is_ai
-				? ChatCompletionRequestMessageRoleEnum.Assistant
-				: ChatCompletionRequestMessageRoleEnum.User,
-			content: message.is_ai
-				? message.text
-				: `${addIds ? `${message.id}: ` : ''}[${message.name}] ${message.text}`,
+		// @ts-ignore TODO: update openai types
+		return Promise.all(messages.map(async (message, i) => {
+			if (!message.photo) {
+				return {
+					role: message.is_ai
+						? ChatCompletionRequestMessageRoleEnum.Assistant
+						: ChatCompletionRequestMessageRoleEnum.User,
+					content: message.is_ai
+						? message.text
+						: `${addIds ? `${message.id}: ` : ''}[${message.name}] ${message.text}`,
+				}
+			} else {
+
+				const photoSelected = message.photo.filter(el => el.file_size < 500000).sort((a, b) => b.file_size - a.file_size)[0]
+				const photoFetched = await this.ctx.api.getFile(photoSelected.file_id)
+				const photoUrl = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${photoFetched.file_path}`
+				console.log({photoUrl})
+				return {
+					role: message.is_ai
+						? ChatCompletionRequestMessageRoleEnum.Assistant
+						: ChatCompletionRequestMessageRoleEnum.User,
+					content: [
+						message.text ? {
+							type: "text",
+							text: `${addIds ? `${message.id}: ` : ''}[${message.name}] ${message.text}`,
+						} : null,
+						{
+							type: "image_url",
+							image_url: {url: photoUrl},
+						},
+					].filter(el => !!el),
+				}
+			}
 		}))
 	}
 
 	public convertMessageToOpenAIChat(
 		messageStored: Message[] | Message,
 		addIds: boolean = false,
-	): ChatCompletionRequestMessage[] {
+	): Promise<ChatCompletionRequestMessage[]> {
 		let messages = Array.isArray(messageStored)
 			? messageStored
 			: [messageStored]
