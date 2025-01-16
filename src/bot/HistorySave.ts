@@ -176,7 +176,7 @@ export class HistorySave {
 					},
 				].filter(el => !!el)
 
-				console.log({photoUrl, content, photoFetched, photoSelected})
+				console.log({photoUrl, content, photoFetched, photoSelected, photoBase64})
 
 				return {
 					role: message.is_ai
