@@ -6,7 +6,7 @@ import {
 	SessionFlavor,
 	webhookCallback,
 } from "grammy"
-import { Configuration, CreateChatCompletionRequest, OpenAIApi } from "openai"
+import OpenAI from "openai"
 import {
 	hydrateApi,
 	HydrateApiFlavor,
@@ -33,10 +33,9 @@ function getMongoCollection() {
 	return db.collection<ISession>("users")
 }
 
-const configuration = new Configuration({
+const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
-const openai = new OpenAIApi(configuration)
 
 const bot = new Bot<BotContext, HydrateApiFlavor<Api>>(
 	process.env.BOT_TOKEN || ""
@@ -108,11 +107,11 @@ if (process.env.DOMAIN && process.env.PORT) {
 	app.listen(Number(process.env.PORT), async () => {
 		console.log(`Bot now listening on port ${process.env.PORT}!`)
 		await bot.api.setWebhook(`https://${domain}/${secretPath}`, {
-			drop_pending_updates: true
+			drop_pending_updates: true,
 		})
 	})
 } else {
 	bot.start({
-		drop_pending_updates: true
+		drop_pending_updates: true,
 	})
 }
