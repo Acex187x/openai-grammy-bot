@@ -1,17 +1,17 @@
 import {
-	Api,
-	Bot,
-	Context,
-	session,
-	SessionFlavor,
-	webhookCallback,
+  Api,
+  Bot,
+  Context,
+  session,
+  SessionFlavor,
+  webhookCallback,
 } from "grammy"
 import OpenAI from "openai"
 import {
-	hydrateApi,
-	HydrateApiFlavor,
-	hydrateContext,
-	HydrateFlavor,
+  hydrateApi,
+  HydrateApiFlavor,
+  hydrateContext,
+  HydrateFlavor,
 } from "@grammyjs/hydrate"
 import * as dotenv from "dotenv"
 import { freeStorage } from "@grammyjs/storage-free"
@@ -29,54 +29,54 @@ import { BotHandlers } from "./bot/BotHandlers"
 dotenv.config()
 
 function getMongoCollection() {
-	if (!process.env.MONGO_URL) return null
-	return db.collection<ISession>("users")
+  if (!process.env.MONGO_URL) return null
+  return db.collection<ISession>("users")
 }
 
 const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 const bot = new Bot<BotContext, HydrateApiFlavor<Api>>(
-	process.env.BOT_TOKEN || ""
+  process.env.BOT_TOKEN || ""
 )
 
 if (process.env.MONGO_URL) {
-	const collection = getMongoCollection()
-	if (!collection) throw new Error("No collection")
-	bot.use(
-		session({
-			initial: () =>
-				({
-					promptStart:
-						"Imagine you are a telegram bot. Always answer in the same language as the question.",
-					debug: false,
-					maxTokens: 1500,
-					temperature: 0.2,
-					rememberContext: true,
-					messages: [],
-					currentPersona: "default",
-				} as SessionData),
-			storage: new MongoDBAdapter({ collection }),
-		})
-	)
+  const collection = getMongoCollection()
+  if (!collection) throw new Error("No collection")
+  bot.use(
+    session({
+      initial: () =>
+        ({
+          promptStart:
+            "Imagine you are a telegram bot. Always answer in the same language as the question.",
+          debug: false,
+          maxTokens: 1500,
+          temperature: 0.2,
+          rememberContext: true,
+          messages: [],
+          currentPersona: "default",
+        } as SessionData),
+      storage: new MongoDBAdapter({ collection }),
+    })
+  )
 } else {
-	bot.use(
-		session({
-			initial: () =>
-				({
-					promptStart:
-						"Imagine you are a telegram bot. Always answer in the same language as the question.",
-					debug: false,
-					maxTokens: 1500,
-					temperature: 0.2,
-					rememberContext: true,
-					messages: [],
-					currentPersona: "default",
-				} as SessionData),
-			storage: freeStorage<SessionData>(bot.token),
-		})
-	)
+  bot.use(
+    session({
+      initial: () =>
+        ({
+          promptStart:
+            "Imagine you are a telegram bot. Always answer in the same language as the question.",
+          debug: false,
+          maxTokens: 1500,
+          temperature: 0.2,
+          rememberContext: true,
+          messages: [],
+          currentPersona: "default",
+        } as SessionData),
+      storage: freeStorage<SessionData>(bot.token),
+    })
+  )
 }
 
 bot.use(hydrateContext())
@@ -90,28 +90,28 @@ const botHandlers = new BotHandlers(bot)
 botHandlers.registerHandlers()
 
 bot.catch = err => {
-	console.error(err)
+  console.error(err)
 }
 
 if (process.env.DOMAIN && process.env.PORT) {
-	const domain = String(process.env.DOMAIN)
-	const secretPath = String(process.env.BOT_TOKEN)
-	const app = express()
+  const domain = String(process.env.DOMAIN)
+  const secretPath = String(process.env.BOT_TOKEN)
+  const app = express()
 
-	app.use(express.json())
-	app.use(
-		`/${secretPath}`,
-		webhookCallback(bot, "express", "return", 60 * 3 * 1000)
-	)
+  app.use(express.json())
+  app.use(
+    `/${secretPath}`,
+    webhookCallback(bot, "express", "return", 60 * 3 * 1000)
+  )
 
-	app.listen(Number(process.env.PORT), async () => {
-		console.log(`Bot now listening on port ${process.env.PORT}!`)
-		await bot.api.setWebhook(`https://${domain}/${secretPath}`, {
-			drop_pending_updates: true,
-		})
-	})
+  app.listen(Number(process.env.PORT), async () => {
+    console.log(`Bot now listening on port ${process.env.PORT}!`)
+    await bot.api.setWebhook(`https://${domain}/${secretPath}`, {
+      drop_pending_updates: true,
+    })
+  })
 } else {
-	bot.start({
-		drop_pending_updates: true,
-	})
+  bot.start({
+    drop_pending_updates: true,
+  })
 }

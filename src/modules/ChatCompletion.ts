@@ -7,7 +7,10 @@ import { BotContext } from "../types"
 import { checkReplyType, getImageAsBase64 } from "../utils"
 import { encode } from "gpt-tokenizer"
 import OpenAI from "openai"
-import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
+import {
+  ChatCompletionMessageParam,
+  ChatCompletionCreateParams,
+} from "openai/resources/chat/completions"
 
 export class ChatCompletion {
   bot: Bot<BotContext>
@@ -27,11 +30,42 @@ export class ChatCompletion {
     temperature: number = 0.7
   ) {
     try {
+      const model = process.env.MODEL || "gpt-3.5-turbo"
+      const isReasoning = process.env.MODEL_IS_REASONING === "1"
+      const reasoningEffort = (process.env.REASONING_EFFORT || "medium") as
+        | "low"
+        | "medium"
+        | "high"
+
+      console.log("Completion params:", {
+        model,
+        isReasoning,
+        reasoningEffort,
+        maxTokens,
+        temperature,
+        messagesCount: messages.length,
+      })
+
       const completion = await this.openai.chat.completions.create({
         messages: messages,
-        model: "gpt-3.5-turbo",
-        max_tokens: maxTokens,
-        temperature: temperature,
+        model: model,
+        ...(isReasoning
+          ? {
+              max_completion_tokens: maxTokens,
+              response_format: { type: "text" },
+              seed: 1234,
+              reasoning_effort: reasoningEffort,
+            }
+          : {
+              max_tokens: maxTokens,
+              temperature: temperature,
+            }),
+      })
+
+      console.log("Got completion response:", {
+        content:
+          completion.choices[0].message.content?.substring(0, 50) + "...",
+        finish_reason: completion.choices[0].finish_reason,
       })
 
       return completion.choices[0].message.content
@@ -169,77 +203,100 @@ export class ChatCompletion {
   }
 
   private async middleware(ctx: BotContext) {
-    if (
-      !ctx.message ||
-      !(ctx.message.text || ctx.message.caption || ctx.message.photo)
-    )
-      return
-
-    const message = ctx.message as Message
-
-    const tgSaveUtil = new HistorySave(ctx)
-    tgSaveUtil.saveMessage()
-
-    const replyType = checkReplyType(ctx)
-    console.log(replyType)
-    if (!replyType) {
-      return
-    }
-
-    let history = await this.createHistory(ctx, tgSaveUtil, replyType)
-    console.log({ history, replyType })
-    await ctx.replyWithChatAction("typing")
-    const typingInterval = setInterval(async () => {
-      await ctx.replyWithChatAction("typing")
-    }, 2000)
-
-    const systemMessage = this.createSystemMessage(ctx, replyType)
-
-    const finalHistory: ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: systemMessage,
-      },
-      ...history,
-    ]
-
-    console.log(`Used send tokes: ${tgSaveUtil.tokenizeHistory(finalHistory)}`)
-
-    const completion = await this.generateCompletion(finalHistory)
-    if (completion.trim() === "*") {
-      clearInterval(typingInterval)
-      return
-    }
-
-    if (typeof completion === "string" && completion.length > 0) {
-      let messageBuffer = completion
-      let replyId = 0
-      const matchId = completion.match(/(\d+):/)
+    try {
       if (
-        replyType === "group-callsign-reply" ||
-        replyType === "group-reply-tree"
-      ) {
-        replyId = message.message_id
-      } else if (replyType === "channel-post-comment" && message.message_id) {
-        replyId = message.message_id
-      }
-      if (matchId) {
-        replyId = parseInt(matchId[1])
-        messageBuffer = completion.replace(matchId[0], "")
-      }
-      const matchStupidBot = messageBuffer.match(/\[.+\]/) // Sometimes bot includes also user name in square brackets , we need to fix it
-      if (matchStupidBot) {
-        messageBuffer = messageBuffer.replace(matchStupidBot[0], "")
-      }
-      const replyMessage = await ctx.reply(messageBuffer, {
-        parse_mode: "Markdown",
-        reply_to_message_id: replyId,
-        allow_sending_without_reply: true,
-      })
-      tgSaveUtil.saveMessage(replyMessage)
-    }
+        !ctx.message ||
+        !(ctx.message.text || ctx.message.caption || ctx.message.photo)
+      )
+        return
 
-    clearInterval(typingInterval)
+      console.log("Processing message:", {
+        text: ctx.message.text || ctx.message.caption,
+        hasPhoto: !!ctx.message.photo,
+      })
+
+      const message = ctx.message as Message
+
+      const tgSaveUtil = new HistorySave(ctx)
+      tgSaveUtil.saveMessage()
+
+      const replyType = checkReplyType(ctx)
+      console.log("Reply type:", replyType)
+      if (!replyType) {
+        console.log("No reply type, skipping")
+        return
+      }
+
+      let history = await this.createHistory(ctx, tgSaveUtil, replyType)
+      console.log("Created history:", {
+        historyLength: history.length,
+        firstMessage: history[0]?.content?.toString().substring(0, 50) + "...",
+      })
+
+      await ctx.replyWithChatAction("typing")
+      const typingInterval = setInterval(async () => {
+        await ctx.replyWithChatAction("typing")
+      }, 2000)
+
+      const systemMessage = this.createSystemMessage(ctx, replyType)
+      console.log("System message:", systemMessage.substring(0, 50) + "...")
+
+      const finalHistory: ChatCompletionMessageParam[] = [
+        {
+          role: "system",
+          content: systemMessage,
+        },
+        ...history,
+      ]
+
+      console.log("Final history length:", finalHistory.length)
+      console.log("Used send tokens:", tgSaveUtil.tokenizeHistory(finalHistory))
+
+      const completion = await this.generateCompletion(finalHistory)
+      if (completion.trim() === "*") {
+        console.log("Got * as completion, skipping")
+        clearInterval(typingInterval)
+        return
+      }
+
+      if (typeof completion === "string" && completion.length > 0) {
+        let messageBuffer = completion
+        let replyId = 0
+        const matchId = completion.match(/(\d+):/)
+        if (
+          replyType === "group-callsign-reply" ||
+          replyType === "group-reply-tree"
+        ) {
+          replyId = message.message_id
+        } else if (replyType === "channel-post-comment" && message.message_id) {
+          replyId = message.message_id
+        }
+        if (matchId) {
+          replyId = parseInt(matchId[1])
+          messageBuffer = completion.replace(matchId[0], "")
+        }
+        const matchStupidBot = messageBuffer.match(/\[.+\]/)
+        if (matchStupidBot) {
+          messageBuffer = messageBuffer.replace(matchStupidBot[0], "")
+        }
+
+        console.log("Sending reply:", {
+          messageLength: messageBuffer.length,
+          replyId,
+        })
+
+        const replyMessage = await ctx.reply(messageBuffer, {
+          parse_mode: "Markdown",
+          reply_to_message_id: replyId,
+          allow_sending_without_reply: true,
+        })
+        tgSaveUtil.saveMessage(replyMessage)
+      }
+
+      clearInterval(typingInterval)
+    } catch (error) {
+      console.error("Error in middleware:", error)
+    }
   }
 
   init() {
